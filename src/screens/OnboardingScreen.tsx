@@ -73,11 +73,19 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {activeIndex === slides.length - 1 ? '¡Comenzar!' : 'Siguiente'}
-          </Text>
-        </TouchableOpacity>
+        {activeIndex === slides.length - 1 ? (
+  <TouchableOpacity
+    style={styles.button}
+    onPress={() => navigation.navigate('CrearCuenta' as never)}
+  >
+    <Text style={styles.buttonText}>¡Comenzar!</Text>
+  </TouchableOpacity>
+) : (
+  <TouchableOpacity style={styles.button} onPress={handleNext}>
+    <Text style={styles.buttonText}>Siguiente</Text>
+  </TouchableOpacity>
+)}
+
 
         {activeIndex === slides.length - 1 && (
         <TouchableOpacity
