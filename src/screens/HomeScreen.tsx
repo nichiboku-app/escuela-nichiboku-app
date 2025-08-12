@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
@@ -33,30 +33,59 @@ type HomeNav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
 
+  const openDrawer = () =>
+    (navigation as any).dispatch(DrawerActions.openDrawer());
+
+  const go = (route: keyof RootStackParamList) => {
+    const parent = (navigation as any).getParent?.();
+    if (parent?.navigate) parent.navigate(route as never);
+    else (navigation as any).navigate(route as never);
+  };
+
   return (
-    <ImageBackground
-      source={require('../../assets/images/final_home_background.png')}
-      style={styles.bg}
-      resizeMode="cover"
-    >
+    <View style={{ flex: 1 }}>
+      {/* Fondo absoluto, sin distorsión */}
+      <ImageBackground
+        source={require('../../assets/images/final_home_background.png')}
+        style={StyleSheet.absoluteFill}
+        imageStyle={{ resizeMode: 'cover' }}
+      />
+
       <SafeAreaView style={{ flex: 1 }}>
         {/* Contenido scrollable */}
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.hamburger} activeOpacity={0.7}>
-              <Image source={require('../../assets/icons/hamburger.png')} style={styles.hamburgerIcon} />
+            <TouchableOpacity
+              style={styles.hamburger}
+              activeOpacity={0.7}
+              onPress={openDrawer}
+            >
+              <Image
+                source={require('../../assets/icons/hamburger.png')}
+                style={styles.hamburgerIcon}
+              />
             </TouchableOpacity>
 
             <Text style={styles.headerTitle}>Hola, mapache</Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Perfil')} activeOpacity={0.8}>
-              <Image source={require('../../assets/images/avatar_formal.png')} style={styles.avatar} />
+            <TouchableOpacity onPress={() => go('Perfil')} activeOpacity={0.8}>
+              <Image
+                source={require('../../assets/images/avatar_formal.png')}
+                style={styles.avatar}
+              />
             </TouchableOpacity>
           </View>
 
           {/* Card Progreso (roja) */}
           <View style={styles.progressCard}>
+            {/* Nube decorativa arriba-derecha */}
+            <Image
+              source={require('../../assets/images/cloud_swirl.png')}
+              style={styles.cloudDecor}
+              resizeMode="contain"
+            />
+
             <View style={styles.progressRow}>
               <View style={styles.levelCircle}>
                 <Image
@@ -64,8 +93,12 @@ export default function HomeScreen(): React.JSX.Element {
                   style={styles.levelIcon}
                 />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.progressTitle}>Consulta tu avance{"\n"}en el nivel N5</Text>
+
+              <View style={styles.progressTextCol}>
+                <Text style={styles.progressTitle}>
+                  Consulta tu avance{'\n'}en el nivel N5
+                </Text>
+
                 <View style={styles.dotsRow}>
                   <View style={[styles.dot, styles.dotActive]} />
                   <View style={styles.dot} />
@@ -78,7 +111,7 @@ export default function HomeScreen(): React.JSX.Element {
 
             <TouchableOpacity
               style={styles.progressBtn}
-              onPress={() => navigation.navigate('ProgresoN5')}
+              onPress={() => go('ProgresoN5')}
               activeOpacity={0.9}
             >
               <Text style={styles.progressBtnText}>Ver progreso N5</Text>
@@ -93,7 +126,7 @@ export default function HomeScreen(): React.JSX.Element {
               resizeMode="stretch"
             />
             <View style={styles.frameContent}>
-              <TouchableOpacity style={styles.frameButton} onPress={() => navigation.navigate('Notas')}>
+              <TouchableOpacity style={styles.frameButton} onPress={() => go('Notas')}>
                 <Image source={require('../../assets/icons/notas.png')} style={styles.frameIcon} />
                 <Text style={styles.frameText}>Notas</Text>
               </TouchableOpacity>
@@ -102,7 +135,7 @@ export default function HomeScreen(): React.JSX.Element {
 
               <TouchableOpacity
                 style={styles.frameButton}
-                onPress={() => navigation.navigate('Calendario')}
+                onPress={() => go('Calendario')}
               >
                 <Image source={require('../../assets/icons/calendario.png')} style={styles.frameIcon} />
                 <Text style={styles.frameText}>Calendario</Text>
@@ -117,14 +150,14 @@ export default function HomeScreen(): React.JSX.Element {
               title="Tanuki: Nivel N5"
               minutes="50 minutos"
               image={require('../../assets/images/cursos/n5_mapache.png')}
-              onPress={() => navigation.navigate('CursoN5')}
+              onPress={() => go('CursoN5')}
             />
             <CourseCard
               color="#b2453c"
               title="Kitsune: Nivel N4"
               minutes="50 minutos"
               image={require('../../assets/images/cursos/n4_zorro.png')}
-              onPress={() => navigation.navigate('CursoN4')}
+              onPress={() => go('CursoN4')}
             />
 
             <CourseWide
@@ -133,7 +166,7 @@ export default function HomeScreen(): React.JSX.Element {
               title="Ryū: Nivel N3"
               minutes="50 minutos"
               image={require('../../assets/images/cursos/n3_leon.png')}
-              onPress={() => navigation.navigate('CursoN3')}
+              onPress={() => go('CursoN3')}
             />
           </View>
 
@@ -144,21 +177,22 @@ export default function HomeScreen(): React.JSX.Element {
         {/* PILL FIJO (negro sólido, sin PNG) */}
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
-            <TouchableOpacity onPress={() => navigation.navigate('Notificaciones')} style={styles.bottomItem}>
+            <TouchableOpacity onPress={() => go('Notificaciones')} style={styles.bottomItem}>
               <Image source={require('../../assets/icons/bell.png')} style={styles.bottomIcon} />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Notas')} style={styles.bottomItem}>
+            <TouchableOpacity onPress={() => go('Notas')} style={styles.bottomItem}>
               <Image source={require('../../assets/icons/heart.png')} style={styles.bottomIcon} />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Chat')} style={styles.bottomItem}>
+            <TouchableOpacity onPress={() => go('Chat')} style={styles.bottomItem}>
               <Image source={require('../../assets/icons/ia.png')} style={styles.bottomIcon} />
+
             </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -193,7 +227,7 @@ function CourseCard({
 
 function CourseWide({
   from,
-  to,
+  to, // no usado porque usas un PNG de gradiente
   title,
   minutes,
   image,
@@ -241,22 +275,40 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hamburger: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  hamburgerIcon: { width: 80, height: 80, resizeMode: 'contain' },
+  hamburgerIcon: { width: 80, height: 80, resizeMode: 'contain' }, // tus medidas
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontSize: 22,
     fontWeight: '800',
   },
-  avatar: { width: 80, height: 80, borderRadius: 19, resizeMode: 'cover' },
+  avatar: { width: 80, height: 80, borderRadius: 19, resizeMode: 'cover' }, // tus medidas
 
   progressCard: {
     backgroundColor: '#b6111b',
     marginHorizontal: 16,
     marginTop: 12,
     borderRadius: 18,
-    padding: 14,
+    padding: 16,
+    overflow: 'hidden',
+    position: 'relative',
   },
+
+  // Columna de texto
+  progressTextCol: {
+    flex: 1,
+    paddingRight: 60,
+  },
+  // Nube decorativa
+  cloudDecor: {
+    position: 'absolute',
+    right: 14,
+    top: 10,
+    width: 90,
+    height: 60,
+    opacity: 1,
+  },
+
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   levelCircle: {
     width: 64,
@@ -267,15 +319,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   levelIcon: { width: 120, height: 120, resizeMode: 'contain' },
-  progressTitle: { color: '#fff', fontSize: 16, fontWeight: '800', lineHeight: 22 },
+  progressTitle: { color: '#fff', fontSize: 16, fontWeight: '800', lineHeight: 24 },
   dotsRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
   dotActive: { backgroundColor: '#fff' },
   progressBtn: {
     backgroundColor: '#f7f7f7',
-    alignSelf: 'center',
+    alignSelf: 'flex-start',
     marginTop: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
@@ -349,17 +401,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 12,
-    alignItems: 'center',  // centrado horizontal
+    alignItems: 'center',
     pointerEvents: 'box-none',
   },
   bottomBg: {
-    width: '72%',          // ajusta 70–76% a gusto
+    width: '72%',
     height: 84,
     borderRadius: 999,
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    backgroundColor: '#000', // negro sólido
+    backgroundColor: '#000',
     paddingHorizontal: 20,
     shadowColor: '#000',
     shadowOpacity: 0.12,
