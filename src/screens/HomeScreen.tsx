@@ -1,7 +1,10 @@
+// src/screens/HomeScreen.tsx
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import { Asset } from 'expo-asset';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   ImageBackground,
@@ -32,6 +35,40 @@ type HomeNav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
+  const [ready, setReady] = useState(false);
+
+  // Precarga imágenes usadas en Home (fondos, cursos e íconos del pill)
+  useEffect(() => {
+    async function preloadImages() {
+      try {
+        await Asset.loadAsync([
+          // Fondos / decor
+          require('../../assets/images/final_home_background.webp'),
+          require('../../assets/images/cloud_swirl.webp'),
+
+          // Cursos
+          require('../../assets/images/cursos/n5_mapache.webp'),
+          require('../../assets/images/cursos/n4_zorro.webp'),
+          require('../../assets/images/cursos/n3_leon.webp'),
+          require('../../assets/images/cursos/n5_mapache_avance.webp'),
+
+          // Íconos header
+          require('../../assets/icons/hamburger.webp'),
+          require('../../assets/images/avatar_formal.webp'),
+
+          // Íconos pill inferior
+          require('../../assets/icons/bell.webp'),
+          require('../../assets/icons/heart.webp'),
+          require('../../assets/icons/ia.webp'),
+        ]);
+      } catch (e) {
+        console.warn('Error precargando imágenes', e);
+      } finally {
+        setReady(true);
+      }
+    }
+    preloadImages();
+  }, []);
 
   const openDrawer = () =>
     (navigation as any).dispatch(DrawerActions.openDrawer());
@@ -42,18 +79,28 @@ export default function HomeScreen(): React.JSX.Element {
     else (navigation as any).navigate(route as never);
   };
 
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#b6111b" />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
       {/* Fondo absoluto, sin distorsión */}
       <ImageBackground
-        source={require('../../assets/images/final_home_background.png')}
+        source={require('../../assets/images/final_home_background.webp')}
         style={StyleSheet.absoluteFill}
         imageStyle={{ resizeMode: 'cover' }}
       />
 
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Contenido scrollable */}
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
@@ -62,7 +109,7 @@ export default function HomeScreen(): React.JSX.Element {
               onPress={openDrawer}
             >
               <Image
-                source={require('../../assets/icons/hamburger.png')}
+                source={require('../../assets/icons/hamburger.webp')}
                 style={styles.hamburgerIcon}
               />
             </TouchableOpacity>
@@ -71,34 +118,30 @@ export default function HomeScreen(): React.JSX.Element {
 
             <TouchableOpacity onPress={() => go('Perfil')} activeOpacity={0.8}>
               <Image
-                source={require('../../assets/images/avatar_formal.png')}
+                source={require('../../assets/images/avatar_formal.webp')}
                 style={styles.avatar}
               />
             </TouchableOpacity>
           </View>
 
-          {/* Card Progreso (roja) */}
+          {/* Card Progreso */}
           <View style={styles.progressCard}>
-            {/* Nube decorativa arriba-derecha */}
             <Image
-              source={require('../../assets/images/cloud_swirl.png')}
+              source={require('../../assets/images/cloud_swirl.webp')}
               style={styles.cloudDecor}
               resizeMode="contain"
             />
-
             <View style={styles.progressRow}>
               <View style={styles.levelCircle}>
                 <Image
-                  source={require('../../assets/images/cursos/n5_mapache_avance.png')}
+                  source={require('../../assets/images/cursos/n5_mapache_avance.webp')}
                   style={styles.levelIcon}
                 />
               </View>
-
               <View style={styles.progressTextCol}>
                 <Text style={styles.progressTitle}>
                   Consulta tu avance{'\n'}en el nivel N5
                 </Text>
-
                 <View style={styles.dotsRow}>
                   <View style={[styles.dot, styles.dotActive]} />
                   <View style={styles.dot} />
@@ -108,7 +151,6 @@ export default function HomeScreen(): React.JSX.Element {
                 </View>
               </View>
             </View>
-
             <TouchableOpacity
               style={styles.progressBtn}
               onPress={() => go('ProgresoN5')}
@@ -118,76 +160,47 @@ export default function HomeScreen(): React.JSX.Element {
             </TouchableOpacity>
           </View>
 
-          {/* Notas / Calendario con marco */}
-          <View style={styles.frameWrapper}>
-            <Image
-              source={require('../../assets/images/frame_washi.png')}
-              style={styles.frameBg}
-              resizeMode="stretch"
-            />
-            <View style={styles.frameContent}>
-              <TouchableOpacity style={styles.frameButton} onPress={() => go('Notas')}>
-                <Image source={require('../../assets/icons/notas.png')} style={styles.frameIcon} />
-                <Text style={styles.frameText}>Notas</Text>
-              </TouchableOpacity>
-
-              <View style={styles.frameDivider} />
-
-              <TouchableOpacity
-                style={styles.frameButton}
-                onPress={() => go('Calendario')}
-              >
-                <Image source={require('../../assets/icons/calendario.png')} style={styles.frameIcon} />
-                <Text style={styles.frameText}>Calendario</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Tarjetas de cursos */}
           <View style={styles.cardsGrid}>
             <CourseCard
               color="#7a0e14"
               title="Tanuki: Nivel N5"
               minutes="50 minutos"
-              image={require('../../assets/images/cursos/n5_mapache.png')}
+              image={require('../../assets/images/cursos/n5_mapache.webp')}
               onPress={() => go('CursoN5')}
             />
             <CourseCard
               color="#b2453c"
               title="Kitsune: Nivel N4"
               minutes="50 minutos"
-              image={require('../../assets/images/cursos/n4_zorro.png')}
+              image={require('../../assets/images/cursos/n4_zorro.webp')}
               onPress={() => go('CursoN4')}
             />
-
             <CourseWide
               from="#f8b7a9"
               to="#c3192e"
               title="Ryū: Nivel N3"
               minutes="50 minutos"
-              image={require('../../assets/images/cursos/n3_leon.png')}
+              image={require('../../assets/images/cursos/n3_leon.webp')}
               onPress={() => go('CursoN3')}
             />
           </View>
 
-          {/* espacio extra para no tapar el contenido con el pill fijo */}
+          {/* espacio extra para no tapar contenido con el pill fijo */}
           <View style={{ height: 120 }} />
         </ScrollView>
 
-        {/* PILL FIJO (negro sólido, sin PNG) */}
+        {/* === PILL FIJO (negro sólido) === */}
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
-            <TouchableOpacity onPress={() => go('Notificaciones')} style={styles.bottomItem}>
-              <Image source={require('../../assets/icons/bell.png')} style={styles.bottomIcon} />
+            <TouchableOpacity onPress={() => go('Notificaciones')} style={styles.bottomItem} activeOpacity={0.8}>
+              <Image source={require('../../assets/icons/bell.webp')} style={styles.bottomIcon} />
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => go('Notas')} style={styles.bottomItem}>
-              <Image source={require('../../assets/icons/heart.png')} style={styles.bottomIcon} />
+            <TouchableOpacity onPress={() => go('Notas')} style={styles.bottomItem} activeOpacity={0.8}>
+              <Image source={require('../../assets/icons/heart.webp')} style={styles.bottomIcon} />
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => go('Chat')} style={styles.bottomItem}>
-              <Image source={require('../../assets/icons/ia.png')} style={styles.bottomIcon} />
-
+            <TouchableOpacity onPress={() => go('Chat')} style={styles.bottomItem} activeOpacity={0.8}>
+              <Image source={require('../../assets/icons/ia.webp')} style={styles.bottomIcon} />
             </TouchableOpacity>
           </View>
         </View>
@@ -217,7 +230,7 @@ function CourseCard({
       <View style={{ flex: 1 }}>
         <Text style={styles.cardTitle}>{title}</Text>
         <View style={styles.timeRow}>
-          <Image source={require('../../assets/icons/clock.png')} style={styles.timeIcon} />
+          <Image source={require('../../assets/icons/clock.webp')} style={styles.timeIcon} />
           <Text style={styles.timeText}>{minutes}</Text>
         </View>
       </View>
@@ -227,7 +240,7 @@ function CourseCard({
 
 function CourseWide({
   from,
-  to, // no usado porque usas un PNG de gradiente
+  to,
   title,
   minutes,
   image,
@@ -243,7 +256,7 @@ function CourseWide({
   return (
     <TouchableOpacity style={styles.wide} onPress={onPress} activeOpacity={0.9}>
       <ImageBackground
-        source={require('../../assets/images/gradient_red.png')}
+        source={require('../../assets/images/gradient_red.webp')}
         style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
         imageStyle={{ borderRadius: 22 }}
       />
@@ -252,7 +265,7 @@ function CourseWide({
         <View style={{ flex: 1 }}>
           <Text style={styles.wideTitle}>{title}</Text>
           <View style={styles.timeRow}>
-            <Image source={require('../../assets/icons/clock.png')} style={styles.timeIcon} />
+            <Image source={require('../../assets/icons/clock.webp')} style={styles.timeIcon} />
             <Text style={styles.timeText}>{minutes}</Text>
           </View>
         </View>
@@ -262,8 +275,6 @@ function CourseWide({
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1 },
-
   // padding superior e inferior del contenido scrolleable
   scroll: { paddingTop: 50, paddingBottom: 120 },
 
@@ -275,14 +286,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hamburger: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  hamburgerIcon: { width: 80, height: 80, resizeMode: 'contain' }, // tus medidas
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  avatar: { width: 80, height: 80, borderRadius: 19, resizeMode: 'cover' }, // tus medidas
+  hamburgerIcon: { width: 80, height: 80, resizeMode: 'contain' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 22, fontWeight: '800' },
+  avatar: { width: 80, height: 80, borderRadius: 19, resizeMode: 'cover' },
 
   progressCard: {
     backgroundColor: '#b6111b',
@@ -293,13 +299,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-
-  // Columna de texto
-  progressTextCol: {
-    flex: 1,
-    paddingRight: 60,
-  },
-  // Nube decorativa
   cloudDecor: {
     position: 'absolute',
     right: 14,
@@ -308,7 +307,6 @@ const styles = StyleSheet.create({
     height: 60,
     opacity: 1,
   },
-
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   levelCircle: {
     width: 64,
@@ -319,6 +317,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   levelIcon: { width: 120, height: 120, resizeMode: 'contain' },
+  progressTextCol: { flex: 1, paddingRight: 60 },
   progressTitle: { color: '#fff', fontSize: 16, fontWeight: '800', lineHeight: 24 },
   dotsRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
@@ -332,32 +331,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   progressBtnText: { fontWeight: '800' },
-
-  frameWrapper: { marginTop: 18, marginHorizontal: 35, position: 'relative' },
-  frameBg: { width: '100%', height: 105 },
-  frameContent: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    justifyContent: 'space-between',
-  },
-  frameButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  frameIcon: { width: 20, height: 20, resizeMode: 'contain' },
-  frameText: { fontWeight: '800' },
-  frameDivider: { width: 10 },
 
   cardsGrid: {
     marginTop: 16,
@@ -386,11 +359,7 @@ const styles = StyleSheet.create({
   timeIcon: { width: 14, height: 14, resizeMode: 'contain', tintColor: '#fff' },
   timeText: { color: '#fff' },
 
-  wide: {
-    width: '100%',
-    borderRadius: 22,
-    padding: 14,
-  },
+  wide: { width: '100%', borderRadius: 22, padding: 14 },
   wideRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   wideIcon: { width: 105, height: 105, resizeMode: 'contain' },
   wideTitle: { color: '#fff', fontWeight: '800', fontSize: 16, marginBottom: 6 },
