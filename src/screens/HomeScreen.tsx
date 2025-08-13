@@ -37,7 +37,7 @@ export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
   const [ready, setReady] = useState(false);
 
-  // Precarga imágenes usadas en Home (fondos, cursos e íconos del pill)
+  // Precarga imágenes usadas en Home
   useEffect(() => {
     async function preloadImages() {
       try {
@@ -60,6 +60,12 @@ export default function HomeScreen(): React.JSX.Element {
           require('../../assets/icons/bell.webp'),
           require('../../assets/icons/heart.webp'),
           require('../../assets/icons/ia.webp'),
+
+          // Ícono reloj
+          require('../../assets/icons/clock.webp'),
+
+          // Gradiente tarjeta wide
+          require('../../assets/images/gradient_red.webp'),
         ]);
       } catch (e) {
         console.warn('Error precargando imágenes', e);
@@ -374,20 +380,20 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
   bottomBg: {
-    width: '72%',
-    height: 84,
+    width: '70%',
+    height: 74,
     borderRadius: 999,
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
     backgroundColor: '#000',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
-  bottomItem: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
-  bottomIcon: { width: 28, height: 28, resizeMode: 'contain' },
+  bottomItem: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+  bottomIcon: { width: 32, height: 32, resizeMode: 'contain' }, // iconos un poquito más grandes
 });
