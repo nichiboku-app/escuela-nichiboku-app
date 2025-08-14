@@ -1,5 +1,5 @@
 // src/screens/PerfilScreen.tsx
-import React from 'react';
+import { useCallback, useRef } from 'react';
 import {
   Dimensions,
   Image,
@@ -14,9 +14,14 @@ import {
 } from 'react-native';
 
 // SVGs como componentes
+import { useFocusEffect } from '@react-navigation/native';
+import { Audio } from 'expo-av';
 import CameraIcon from '../../assets/icons/camera.svg';
 import CrownIcon from '../../assets/icons/crown.svg';
 import EditIcon from '../../assets/icons/edit.svg';
+
+
+
 
 // Raster (recortados/trim)
 import dividerImg from '../../assets/icons/DividerIcon.webp';
@@ -33,12 +38,59 @@ const RING_WIDTH    = 13;
 const RING_GAP      = 18;
 const AVATAR_INNER  = AVATAR_OUTER - 2 * (RING_WIDTH + RING_GAP);
 
+
+
 export default function PerfilScreen() {
   const onPickCover  = () => {};
   const onPickAvatar = () => {};
   const onEditName   = () => {};
 
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+useFocusEffect(
+  useCallback(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        // iOS: que suene aunque el switch de silencio esté activado
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+        });
+
+        // Carga y reproduce
+        const { sound } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/enter_profile.mp3'),
+          { shouldPlay: true, volume: 0.6, isLooping: false }
+        );
+
+        if (!mounted) {
+          await sound.unloadAsync();
+          return;
+        }
+        soundRef.current = sound;
+      } catch (e) {
+        console.warn('Error reproduciendo sonido de perfil:', e);
+      }
+    })();
+
+    // Cuando sales de la pantalla o haces blur, descarga el recurso
+    return () => {
+      mounted = false;
+      if (soundRef.current) {
+        soundRef.current.unloadAsync().catch(() => {});
+        soundRef.current = null;
+      }
+    };
+  }, [])
+);
+
+
   return (
+
+    
     <SafeAreaView style={styles.safe}>
       <ScrollView
         style={styles.scroll}

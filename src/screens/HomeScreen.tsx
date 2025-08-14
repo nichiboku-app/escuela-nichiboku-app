@@ -122,7 +122,7 @@ export default function HomeScreen(): React.JSX.Element {
 
             <Text style={styles.headerTitle}>Hola, mapache</Text>
 
-            <TouchableOpacity onPress={() => go('Perfil')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
               <Image
                 source={require('../../assets/images/avatar_formal.webp')}
                 style={styles.avatar}
