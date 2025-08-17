@@ -1,6 +1,7 @@
 // src/screens/PerfilScreen.tsx
-import { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   Image,
   ImageBackground,
@@ -13,91 +14,115 @@ import {
   View,
 } from 'react-native';
 
-// SVGs como componentes
 import { useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import CameraIcon from '../../assets/icons/camera.svg';
 import CrownIcon from '../../assets/icons/crown.svg';
 import EditIcon from '../../assets/icons/edit.svg';
 
-
-
-
-// Raster (recortados/trim)
 import dividerImg from '../../assets/icons/DividerIcon.webp';
+
+import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '../config/firebaseConfig';
+import { pickAndSaveAvatar } from '../services/uploadAvatar';
 
 const { width } = Dimensions.get('window');
 
-// Altura del paisaje (ajústalo si quieres más alto/bajo)
-const BG_HEIGHT     = Math.round(width * 0.62);
-const CARD_RADIUS   = 26;
+const BG_HEIGHT = Math.round(width * 0.62);
+const CARD_RADIUS = 26;
 
 // Avatar
-const AVATAR_OUTER  = 180;
-const RING_WIDTH    = 13;
-const RING_GAP      = 18;
-const AVATAR_INNER  = AVATAR_OUTER - 2 * (RING_WIDTH + RING_GAP);
-
-
+const AVATAR_OUTER = 180;
+const RING_WIDTH = 13;
+const RING_GAP = 18;
+const AVATAR_INNER = AVATAR_OUTER - 2 * (RING_WIDTH + RING_GAP);
 
 export default function PerfilScreen() {
-  const onPickCover  = () => {};
-  const onPickAvatar = () => {};
-  const onEditName   = () => {};
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  const onPickCover = () => {};
+  const onEditName = () => {};
+
+  const onPickAvatar = async () => {
+    try {
+      if (updating) return;
+      setUpdating(true);
+      const url = await pickAndSaveAvatar();
+      if (url) setAvatarSrc(url); // refresca en pantalla al instante
+    } catch (e: any) {
+      Alert.alert('Ups', e?.message ?? 'No se pudo actualizar tu foto.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Escucha cambios en Firestore (photoBase64); fallback a auth.photoURL si existe
+  useEffect(() => {
+    const u = auth.currentUser;
+    if (!u) return;
+
+    const unsub = onSnapshot(doc(db, 'Usuarios', u.uid), (snap) => {
+      const b64 = snap.get('photoBase64');
+      if (b64) {
+        setAvatarSrc(`data:image/jpeg;base64,${b64}`);
+      } else if (u.photoURL) {
+        setAvatarSrc(u.photoURL);
+      } else {
+        setAvatarSrc(null);
+      }
+    });
+
+    return () => unsub();
+  }, []);
 
   const soundRef = useRef<Audio.Sound | null>(null);
 
-useFocusEffect(
-  useCallback(() => {
-    let mounted = true;
+  useFocusEffect(
+    useCallback(() => {
+      let mounted = true;
 
-    (async () => {
-      try {
-        // iOS: que suene aunque el switch de silencio esté activado
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-        });
+      (async () => {
+        try {
+          await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+            shouldDuckAndroid: true,
+          });
 
-        // Carga y reproduce
-        const { sound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/enter_profile.mp3'),
-          { shouldPlay: true, volume: 0.6, isLooping: false }
-        );
+          const { sound } = await Audio.Sound.createAsync(
+            require('../../assets/sounds/enter_profile.mp3'),
+            { shouldPlay: true, volume: 0.6, isLooping: false }
+          );
 
-        if (!mounted) {
-          await sound.unloadAsync();
-          return;
+          if (!mounted) {
+            await sound.unloadAsync();
+            return;
+          }
+          soundRef.current = sound;
+        } catch (e) {
+          console.warn('Error reproduciendo sonido de perfil:', e);
         }
-        soundRef.current = sound;
-      } catch (e) {
-        console.warn('Error reproduciendo sonido de perfil:', e);
-      }
-    })();
+      })();
 
-    // Cuando sales de la pantalla o haces blur, descarga el recurso
-    return () => {
-      mounted = false;
-      if (soundRef.current) {
-        soundRef.current.unloadAsync().catch(() => {});
-        soundRef.current = null;
-      }
-    };
-  }, [])
-);
-
+      return () => {
+        mounted = false;
+        if (soundRef.current) {
+          soundRef.current.unloadAsync().catch(() => {});
+          soundRef.current = null;
+        }
+      };
+    }, [])
+  );
 
   return (
-
-    
     <SafeAreaView style={styles.safe}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.cc}
         showsVerticalScrollIndicator={false}
       >
-        {/* ====== FONDO MONTAÑAS (COMPARTIDO) ====== */}
+        {/* ====== FONDO MONTAÑAS ====== */}
         <TouchableOpacity activeOpacity={0.9} onPress={onPickCover}>
           <ImageBackground
             source={require('../../assets/images/profile_bg.webp')}
@@ -121,7 +146,11 @@ useFocusEffect(
                 <View style={styles.avatarRing}>
                   <View style={styles.avatarClip}>
                     <Image
-                      source={require('../../assets/images/avatar_placeholder.webp')}
+                      source={
+                        avatarSrc
+                          ? { uri: avatarSrc }
+                          : require('../../assets/images/avatar_placeholder.webp')
+                      }
                       style={styles.avatarImage}
                       resizeMode="cover"
                     />
@@ -129,8 +158,13 @@ useFocusEffect(
                 </View>
               </ImageBackground>
 
-              {/* Botón de cámara (valores originales) */}
-              <TouchableOpacity onPress={onPickAvatar} activeOpacity={0.9} style={styles.camBtn}>
+              {/* Botón de cámara */}
+              <TouchableOpacity
+                onPress={onPickAvatar}
+                activeOpacity={0.9}
+                style={styles.camBtn}
+                disabled={updating}
+              >
                 <View style={styles.camBtnInner}>
                   <CameraIcon width={26} height={26} />
                 </View>
@@ -143,13 +177,18 @@ useFocusEffect(
             <Text style={styles.name} numberOfLines={1} onPress={onEditName}>
               Mapache Medina
             </Text>
-            <TouchableOpacity onPress={onEditName} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onEditName}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <EditIcon width={22} height={22} />
             </TouchableOpacity>
           </View>
 
           {/* Email */}
-          <Text style={styles.email} numberOfLines={1}>mapache@gmail.com</Text>
+          <Text style={styles.email} numberOfLines={1}>
+            mapache@gmail.com
+          </Text>
 
           {/* Botón premium */}
           <TouchableOpacity style={styles.premiumBtn} activeOpacity={0.9}>
@@ -177,7 +216,9 @@ useFocusEffect(
               {/* Meta semanal */}
               <Card>
                 <Image
-                  source={require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType}
+                  source={
+                    require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType
+                  }
                   style={styles.bgSoft}
                   resizeMode="cover"
                 />
@@ -185,7 +226,9 @@ useFocusEffect(
 
                 <View style={styles.metaRow}>
                   <Image
-                    source={require('../../assets/icons/icono_circular.webp') as ImageSourcePropType}
+                    source={
+                      require('../../assets/icons/icono_circular.webp') as ImageSourcePropType
+                    }
                     style={styles.metaCircle}
                     resizeMode="contain"
                   />
@@ -196,10 +239,12 @@ useFocusEffect(
                 </View>
               </Card>
 
-              {/* Racha de estudio (slider) */}
+              {/* Racha de estudio */}
               <Card>
                 <Image
-                  source={require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType}
+                  source={
+                    require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType
+                  }
                   style={styles.bgSoft}
                   resizeMode="cover"
                 />
@@ -215,8 +260,14 @@ useFocusEffect(
                     label="Samurai"
                   />
                   <LevelPill text="L1" />
-                  <LevelPill text="L3" icon={require('../../assets/icons/l3.webp') as ImageSourcePropType} />
-                  <LevelPill text="L5" icon={require('../../assets/icons/l5.webp') as ImageSourcePropType} />
+                  <LevelPill
+                    text="L3"
+                    icon={require('../../assets/icons/l3.webp') as ImageSourcePropType}
+                  />
+                  <LevelPill
+                    text="L5"
+                    icon={require('../../assets/icons/l5.webp') as ImageSourcePropType}
+                  />
                   <LevelPill text="L7" />
                   <LevelPill text="L9" />
                 </ScrollView>
@@ -225,10 +276,12 @@ useFocusEffect(
 
             {/* Fila 2 */}
             <View style={styles.row}>
-              {/* Logros (slider) */}
+              {/* Logros */}
               <Card>
                 <Image
-                  source={require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType}
+                  source={
+                    require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType
+                  }
                   style={styles.bgSoft}
                   resizeMode="cover"
                 />
@@ -239,18 +292,35 @@ useFocusEffect(
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.hScroll}
                 >
-                  <Achievement src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType} sub="N1" />
-                  <Achievement src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType} sub="N1" />
-                  <Achievement src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType} sub="N1" />
-                  <Achievement src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType} sub="N2" />
-                  <Achievement src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType} sub="N3" />
+                  <Achievement
+                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
+                    sub="N1"
+                  />
+                  <Achievement
+                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
+                    sub="N1"
+                  />
+                  <Achievement
+                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
+                    sub="N1"
+                  />
+                  <Achievement
+                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
+                    sub="N2"
+                  />
+                  <Achievement
+                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
+                    sub="N3"
+                  />
                 </ScrollView>
               </Card>
 
               {/* Juegos */}
               <Card>
                 <Image
-                  source={require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType}
+                  source={
+                    require('../../assets/icons/achievement_bg2.webp') as ImageSourcePropType
+                  }
                   style={styles.bgSoft}
                   resizeMode="cover"
                 />
@@ -258,13 +328,17 @@ useFocusEffect(
 
                 <View style={styles.gamesRow}>
                   <Image
-                    source={require('../../assets/icons/juego_mapache.webp') as ImageSourcePropType}
+                    source={
+                      require('../../assets/icons/juego_mapache.webp') as ImageSourcePropType
+                    }
                     style={styles.gameIcon}
                     resizeMode="contain"
                   />
                   <View style={styles.pointsBadge}>
                     <Image
-                      source={require('../../assets/icons/juegos_puntos.webp') as ImageSourcePropType}
+                      source={
+                        require('../../assets/icons/juegos_puntos.webp') as ImageSourcePropType
+                      }
                       style={styles.pointsImg}
                       resizeMode="contain"
                     />
@@ -276,20 +350,23 @@ useFocusEffect(
           </View>
         </View>
 
-        {/* espacio extra para no cortar el último contenido */}
         <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* —————— Subcomponentes (locales) —————— */
+/* —————— Subcomponentes —————— */
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
-      <Text style={styles.statValue} numberOfLines={1}>{value}</Text>
+      <Text style={styles.statLabel} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={styles.statValue} numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -340,7 +417,6 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#ffffff' },
   scroll: { flex: 1 },
   cc: {
-    // permite que todo crezca y haga scroll
     paddingBottom: 16,
     backgroundColor: '#ffffff',
   },
@@ -349,7 +425,7 @@ const styles = StyleSheet.create({
   bg: { width: '100%', height: BG_HEIGHT, backgroundColor: '#fff' },
   bgImage: {},
 
-  /* Tarjeta blanca que se mete sobre el fondo */
+  /* Tarjeta blanca */
   card: {
     marginTop: -CARD_RADIUS,
     borderTopLeftRadius: CARD_RADIUS,
@@ -390,17 +466,25 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#ddd',
   },
+  // ❗️Sin porcentajes ni transforms con strings
   avatarImage: {
-    width: '115%',
-    height: '115%',
-    transform: [{ translateX: '-7.5%' }, { translateY: '-7.5%' }],
+    width: AVATAR_INNER * 1.15,
+    height: AVATAR_INNER * 1.15,
+    marginLeft: -(AVATAR_INNER * 0.075),
+    marginTop: -(AVATAR_INNER * 0.075),
   },
   camBtn: { position: 'absolute', right: 18, bottom: 18 },
   camBtnInner: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff',
-    alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
     elevation: 3,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
   },
 
@@ -413,7 +497,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 8,
   },
-  name:  { fontSize: 24, lineHeight: 30, textAlign: 'center', fontWeight: '800', maxWidth: '90%' },
+  name: { fontSize: 24, lineHeight: 30, textAlign: 'center', fontWeight: '800', maxWidth: '90%' },
   email: { marginTop: 2, textAlign: 'center', color: '#777' },
 
   /* Premium */
@@ -442,7 +526,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  dividerWrap: { width: 16, alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
+  dividerWrap: { width: 16, alignItems: 'center', justifyContent: 'center' },
   dividerIcon: { width: 8, height: 40 },
 
   stat: { flex: 1, minWidth: 0, alignItems: 'center' },
@@ -459,7 +543,6 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
-  // Card con fondo decorativo (para cada una de las 4)
   cardInner: {
     flex: 1,
     borderRadius: 20,
@@ -473,10 +556,9 @@ const styles = StyleSheet.create({
   },
   bgSoft: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.14, // montañitas suaves
+    opacity: 0.14,
   },
 
-  // Títulos centrados
   cardTitle: {
     fontSize: 18,
     fontWeight: '900',
@@ -485,7 +567,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  /* Meta semanal */
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -493,13 +574,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   metaCircle: { width: 64, height: 64 },
-  metaBig:    { fontSize: 24, fontWeight: '900', color: '#6b1f1f' },
-  metaLabel:  { marginTop: 4, color: '#3b2b1b' },
+  metaBig: { fontSize: 24, fontWeight: '900', color: '#6b1f1f' },
+  metaLabel: { marginTop: 4, color: '#3b2b1b' },
 
-  // Contenido de los sliders
   hScroll: { alignItems: 'center', gap: 10, paddingRight: 4 },
 
-  /* Racha */
   iconMid: { width: 46, height: 46 },
   smallLabel: { marginTop: 4, fontSize: 12, color: '#3b2b1b' },
 
@@ -517,7 +596,6 @@ const styles = StyleSheet.create({
   levelIcon: { width: 20, height: 20 },
   levelTxt: { fontWeight: '800', color: '#3b2b1b' },
 
-  /* Logros */
   achItem: {
     width: 66,
     height: 66,
@@ -534,7 +612,6 @@ const styles = StyleSheet.create({
     color: '#3b2b1b',
   },
 
-  /* Juegos */
   gamesRow: {
     flexDirection: 'row',
     alignItems: 'center',
