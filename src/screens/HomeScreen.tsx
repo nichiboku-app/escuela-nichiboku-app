@@ -16,6 +16,11 @@ import {
   View,
 } from 'react-native';
 
+import { doc, onSnapshot } from 'firebase/firestore';
+import AvatarWithFrame from '../components/AvatarWithFrame';
+import { auth, db } from '../config/firebaseConfig';
+import { getAvatarUri } from '../services/uploadAvatar';
+
 const { width } = Dimensions.get('window');
 
 type RootStackParamList = {
@@ -37,6 +42,8 @@ export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
   const [ready, setReady] = useState(false);
 
+  const [userDoc, setUserDoc] = useState<any>(null);
+
   // Precarga imágenes usadas en Home
   useEffect(() => {
     async function preloadImages() {
@@ -54,7 +61,8 @@ export default function HomeScreen(): React.JSX.Element {
 
           // Íconos header
           require('../../assets/icons/hamburger.webp'),
-          require('../../assets/images/avatar_formal.webp'),
+          require('../../assets/images/avatar_formal.webp'), // fallback
+          require('../../assets/images/avatar_frame.webp'), // marco
 
           // Íconos pill inferior
           require('../../assets/icons/bell.webp'),
@@ -76,6 +84,15 @@ export default function HomeScreen(): React.JSX.Element {
     preloadImages();
   }, []);
 
+  // Suscríbete a Usuarios/{uid} para foto/nombre
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    return onSnapshot(doc(db, 'Usuarios', uid), (snap) => {
+      setUserDoc({ id: snap.id, ...snap.data() });
+    });
+  }, []);
+
   const openDrawer = () =>
     (navigation as any).dispatch(DrawerActions.openDrawer());
 
@@ -92,6 +109,11 @@ export default function HomeScreen(): React.JSX.Element {
       </View>
     );
   }
+
+  const avatarUri = getAvatarUri(userDoc);
+  const displayName =
+    userDoc?.displayName || auth.currentUser?.displayName || 'Mapache';
+  const firstName = (displayName || 'Mapache').split(' ')[0];
 
   return (
     <View style={{ flex: 1 }}>
@@ -120,13 +142,10 @@ export default function HomeScreen(): React.JSX.Element {
               />
             </TouchableOpacity>
 
-            <Text style={styles.headerTitle}>Hola, mapache</Text>
+            <Text style={styles.headerTitle}>Hola, {firstName}</Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
-              <Image
-                source={require('../../assets/images/avatar_formal.webp')}
-                style={styles.avatar}
-              />
+            <TouchableOpacity onPress={() => navigation.navigate('Perfil' as never)}>
+              <AvatarWithFrame size={80} uri={avatarUri} />
             </TouchableOpacity>
           </View>
 
@@ -281,7 +300,6 @@ function CourseWide({
 }
 
 const styles = StyleSheet.create({
-  // padding superior e inferior del contenido scrolleable
   scroll: { paddingTop: 50, paddingBottom: 120 },
 
   header: {
@@ -294,7 +312,6 @@ const styles = StyleSheet.create({
   hamburger: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   hamburgerIcon: { width: 80, height: 80, resizeMode: 'contain' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 22, fontWeight: '800' },
-  avatar: { width: 80, height: 80, borderRadius: 19, resizeMode: 'cover' },
 
   progressCard: {
     backgroundColor: '#b6111b',
@@ -395,5 +412,5 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   bottomItem: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
-  bottomIcon: { width: 32, height: 32, resizeMode: 'contain' }, // iconos un poquito más grandes
+  bottomIcon: { width: 32, height: 32, resizeMode: 'contain' },
 });

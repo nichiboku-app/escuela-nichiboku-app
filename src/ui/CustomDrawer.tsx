@@ -2,7 +2,6 @@
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { CommonActions } from '@react-navigation/native';
 import { Asset } from 'expo-asset';
-import { getAuth, signOut } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,10 +14,17 @@ import {
   View,
 } from 'react-native';
 
+import { signOut } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import AvatarWithFrame from '../components/AvatarWithFrame';
+import { auth, db } from '../config/firebaseConfig';
+import { getAvatarUri } from '../services/uploadAvatar';
+
 // ====== IMÁGENES (decor) ======
 const BAMBOO_FULL = require('../../assets/images/bamboo_strip_full.png');
 const BARRA_FULL  = require('../../assets/images/barra_full2.png');
-const DRAWER_BG   = require('../../assets/images/drawer_bgx.webp'); // <-- WebP optimizado
+const DRAWER_BG   = require('../../assets/images/drawer_bgx.webp');
+const AVATAR_FRAME = require('../../assets/images/avatar_frame.webp'); // marco
 
 const SEP_FULL = require('../../assets/images/sep_full.png');
 const KNOT     = require('../../assets/images/knot.png');
@@ -49,31 +55,20 @@ const SEP_WIDTH_DP = 110;
 const USE_SIMPLE_SEP = false;
 
 export default function CustomDrawer(props: DrawerContentComponentProps) {
-  const auth = getAuth();
   const email = auth.currentUser?.email ?? 'Invitado';
   const [ready, setReady] = useState(false);
+  const [userDoc, setUserDoc] = useState<any>(null);
 
   // Precarga imágenes usadas en el Drawer
   useEffect(() => {
     async function preloadDrawerAssets() {
       try {
         await Asset.loadAsync([
-          BAMBOO_FULL,
-          BARRA_FULL,
-          DRAWER_BG,
-          SEP_FULL,
-          KNOT,
-          FOOTER_SEAL,
-          ICO_PREMIUM,
-          ICO_CLASIF,
-          ICO_IA,
-          ICO_LIBRO,
-          ICO_INSTAGRAM,
-          ICO_NOTIF,
-          ICO_FAQ,
-          ICO_PRIV,
-          ICO_HOME,
-          ICO_LOGOUT,
+          BAMBOO_FULL, BARRA_FULL, DRAWER_BG, AVATAR_FRAME,
+          SEP_FULL, KNOT, FOOTER_SEAL,
+          ICO_PREMIUM, ICO_CLASIF, ICO_IA, ICO_LIBRO,
+          ICO_INSTAGRAM, ICO_NOTIF, ICO_FAQ, ICO_PRIV,
+          ICO_HOME, ICO_LOGOUT,
         ]);
       } catch (e) {
         console.warn('Error precargando imágenes Drawer', e);
@@ -82,6 +77,15 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
       }
     }
     preloadDrawerAssets();
+  }, []);
+
+  // Escucha el doc del usuario para obtener photoURL/displayName
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    return onSnapshot(doc(db, 'Usuarios', uid), (snap) => {
+      setUserDoc({ id: snap.id, ...snap.data() });
+    });
   }, []);
 
   const go = (route: string) => props.navigation.navigate(route as never);
@@ -98,10 +102,7 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
       console.warn('signOut error', e);
     } finally {
       props.navigation.getParent()?.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Onboarding' as never }],
-        })
+        CommonActions.reset({ index: 0, routes: [{ name: 'Onboarding' as never }] })
       );
     }
   };
@@ -113,6 +114,10 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
       </View>
     );
   }
+
+  const avatarUri = getAvatarUri(userDoc);
+  const displayName =
+    userDoc?.displayName || auth.currentUser?.displayName || 'Usuario';
 
   return (
     <View style={styles.root}>
@@ -150,8 +155,8 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
       >
         {/* Header */}
         <View style={styles.headerBox}>
-          <Image source={require('../../assets/images/avatar_formal.png')} style={styles.avatar} />
-          <Text style={styles.nombre}>Mapache Medina</Text>
+          <AvatarWithFrame size={86} uri={avatarUri} />
+          <Text style={styles.nombre}>{displayName}</Text>
           <Text style={styles.correo}>{email}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => go('Perfil')}>
             <Text style={styles.primaryBtnText}>Mi página</Text>
@@ -224,8 +229,7 @@ const styles = StyleSheet.create({
   decorLayer: { ...StyleSheet.absoluteFillObject },
   container: { paddingTop: 28, paddingBottom: 24 },
   headerBox: { alignItems: 'center', paddingVertical: 8, marginBottom: 6 },
-  avatar: { width: 72, height: 72, borderRadius: 36, marginBottom: 10 },
-  nombre: { fontSize: 20, fontWeight: '800', marginBottom: 2 },
+  nombre: { fontSize: 20, fontWeight: '800', marginTop: 8, marginBottom: 2 },
   correo: { fontSize: 12, opacity: 0.8, marginBottom: 12 },
   primaryBtn: { borderWidth: 1.5, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10 },
   primaryBtnText: { fontWeight: '700' },
