@@ -37,6 +37,12 @@ const RING_WIDTH = 13;
 const RING_GAP = 18;
 const AVATAR_INNER = AVATAR_OUTER - 2 * (RING_WIDTH + RING_GAP);
 
+// Cache-busting helper para imágenes (evita que se quede la foto anterior en caché)
+function bust(url: string, v?: number | string) {
+  if (!v) return url;
+  return url.includes('?') ? `${url}&v=${v}` : `${url}?v=${v}`;
+}
+
 export default function PerfilScreen() {
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
@@ -57,14 +63,20 @@ export default function PerfilScreen() {
     }
   };
 
-  // Escucha cambios en Firestore (photoBase64); fallback a auth.photoURL si existe
+  // Escucha cambios en Firestore (photoURL + avatarUpdatedAt).
+  // Mantiene compatibilidad con photoBase64 y con auth.photoURL como último fallback.
   useEffect(() => {
     const u = auth.currentUser;
     if (!u) return;
 
     const unsub = onSnapshot(doc(db, 'Usuarios', u.uid), (snap) => {
-      const b64 = snap.get('photoBase64');
-      if (b64) {
+      const url = snap.get('photoURL') as string | undefined;
+      const v   = snap.get('avatarUpdatedAt') as number | string | undefined;
+      const b64 = snap.get('photoBase64') as string | undefined;
+
+      if (url) {
+        setAvatarSrc(bust(url, v));
+      } else if (b64) {
         setAvatarSrc(`data:image/jpeg;base64,${b64}`);
       } else if (u.photoURL) {
         setAvatarSrc(u.photoURL);
@@ -466,7 +478,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#ddd',
   },
-  // ❗️Sin porcentajes ni transforms con strings
+  // Sin porcentajes ni transforms con strings
   avatarImage: {
     width: AVATAR_INNER * 1.15,
     height: AVATAR_INNER * 1.15,

@@ -1,60 +1,61 @@
-// src/services/uploadAvatar.ts
-import * as ImageManipulator from "expo-image-manipulator";
-import * as ImagePicker from "expo-image-picker";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { getDownloadURL, getStorage, ref, uploadString } from "firebase/storage";
-import { auth, db } from "../config/firebaseConfig";
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebaseConfig';
 
-const USER_COLLECTION = "Usuarios"; // cambia a "users" cuando unifiques
-
-function mediaImages() {
-  const ip: any = ImagePicker as any;
-  return ip.MediaType ? [ip.MediaType.Images] : ImagePicker.MediaTypeOptions.Images;
+// Devuelve un data URL si hay base64 en Firestore; si no, usa photoURL de auth
+export function getAvatarUri(userDoc?: any): string | null {
+  const b64: string | undefined = userDoc?.photoBase64;
+  if (b64 && b64.length > 10) return `data:image/jpeg;base64,${b64}`;
+  return auth.currentUser?.photoURL ?? null;
 }
 
+/**
+ * Abre la galería, recorta a 1:1, comprime y guarda el base64 en
+ * Firestore: Usuarios/{uid}.  Sin blobs.  Devuelve un data URL para
+ * refrescar la UI inmediatamente.
+ */
 export async function pickAndSaveAvatar(): Promise<string | null> {
   const user = auth.currentUser;
-  if (!user) throw new Error("Debes iniciar sesión.");
+  if (!user) throw new Error('No hay usuario autenticado');
 
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (perm.status !== "granted") throw new Error("Permiso de galería denegado.");
+  // Permisos
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    throw new Error('Permiso de galería denegado');
+  }
 
+  // Selección
   const res = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: mediaImages(),
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
     allowsEditing: true,
     aspect: [1, 1],
-    quality: 1,
-  } as any);
+    quality: 0.9,          // calidad fuente
+    base64: false,         // base64 lo generamos tras comprimir
+  });
+  if (res.canceled) return null;
 
-  if (res.canceled || !res.assets?.length) return null;
+  const asset = res.assets?.[0];
+  if (!asset?.uri) return null;
 
-  const out = await ImageManipulator.manipulateAsync(
-    res.assets[0].uri,
-    [{ resize: { width: 512 } }],
-    { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+  // ⚙️ Comprime + genera base64 (sin blobs)
+  const manipulated = await ImageManipulator.manipulateAsync(
+    asset.uri,
+    [{ resize: { width: 600 } }], // ~600px lado mayor
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
   );
-  if (!out.base64) throw new Error("No se pudo convertir la imagen.");
 
-  const storage = getStorage();
-  const version = Date.now();
-  const fileRef = ref(storage, `users/${user.uid}/avatar_${version}.jpg`);
-  await uploadString(fileRef, out.base64, "base64", { contentType: "image/jpeg" });
+  const b64 = manipulated.base64;
+  if (!b64) throw new Error('No se pudo leer la imagen seleccionada');
 
-  const url = await getDownloadURL(fileRef);
-
+  // Guarda en Firestore (colección correcta: "Usuarios")
+  const refDoc = doc(db, 'Usuarios', user.uid);
   await setDoc(
-    doc(db, USER_COLLECTION, user.uid),
-    { photoURL: url, avatarUpdatedAt: serverTimestamp() },
+    refDoc,
+    { photoBase64: b64, avatarUpdatedAt: Date.now() },
     { merge: true }
   );
 
-  return `${url}?t=${version}`; // evita caché
-}
-
-export function getAvatarUri(userDoc?: any): string | null {
-  if (!userDoc) return null;
-  if (typeof userDoc.photoURL === "string" && userDoc.photoURL) return userDoc.photoURL;
-  if (typeof userDoc.photoBase64 === "string" && userDoc.photoBase64)
-    return `data:image/jpeg;base64,${userDoc.photoBase64}`;
-  return null;
+  // Devuelve data URL para refrescar avatar en pantalla
+  return `data:image/jpeg;base64,${b64}`;
 }
