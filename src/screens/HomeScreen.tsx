@@ -28,6 +28,7 @@ type RootStackParamList = {
   ProgresoN5: undefined;
   Notas: undefined;
   Calendario: undefined;
+  BienvenidaCursoN5: undefined;
   CursoN5: undefined;
   CursoN4: undefined;
   CursoN3: undefined;
@@ -224,7 +225,7 @@ export default function HomeScreen(): React.JSX.Element {
               title="Tanuki: Nivel N5"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n5_mapache.webp")}
-              onPress={() => go("CursoN5")}
+              onPress={() => go("BienvenidaCursoN5")}
             />
             <CourseCard
               color="#b2453c"

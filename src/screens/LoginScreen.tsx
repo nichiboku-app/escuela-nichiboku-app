@@ -41,6 +41,7 @@ export default function LoginScreen(): React.JSX.Element {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const uid = auth.currentUser?.uid;
 
   const togglePasswordVisibility = () => setShowPassword((p) => !p);
 
