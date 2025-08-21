@@ -1,5 +1,5 @@
 // src/screens/HomeScreen.tsx
-import { DrawerActions, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Asset } from "expo-asset";
 import React, { useEffect, useState } from "react";
@@ -20,12 +20,14 @@ import { doc, onSnapshot } from "firebase/firestore";
 import AvatarWithFrame from "../components/AvatarWithFrame";
 import { auth, db } from "../config/firebaseConfig";
 import { getAvatarUri } from "../services/uploadAvatar";
+import { openDrawerDeep } from "../utils/nav"; // ⬅️ NUEVO
 
 const { width } = Dimensions.get("window");
 
+// Este tipo aquí ya no representa el Root real; lo mantenemos para autocompletado básico.
 type RootStackParamList = {
   Home: undefined;
-  ProgresoN5: undefined;
+  ProgresoN5: undefined;           // ⚠️ No existe en tu árbol actual; lo redirigimos a ActividadesN5
   Notas: undefined;
   Calendario: undefined;
   BienvenidaCursoN5: undefined;
@@ -33,8 +35,8 @@ type RootStackParamList = {
   CursoN4: undefined;
   CursoN3: undefined;
   Perfil: undefined;
-  Notificaciones: undefined;
-  Chat: undefined;
+  Notificaciones: undefined;       // ⚠️ Drawer no la tiene; ajusta cuando exista
+  Chat: undefined;                 // ⚠️ Drawer no la tiene; ajusta cuando exista
 };
 
 type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
@@ -45,7 +47,6 @@ export default function HomeScreen(): React.JSX.Element {
   const [userDoc, setUserDoc] = useState<any>(null);
 
   useEffect(() => {
-    console.log('[DEBUG] UID en Home:', auth.currentUser?.uid);
     async function preloadImages() {
       try {
         await Asset.loadAsync([
@@ -90,13 +91,53 @@ export default function HomeScreen(): React.JSX.Element {
     });
   }, []);
 
-  const openDrawer = () =>
-    (navigation as any).dispatch(DrawerActions.openDrawer());
+  // ⬇️ Abre el Drawer de forma robusta (Opción B + helper)
+  const openDrawer = () => {
+    const ok = openDrawerDeep(navigation as any);
+    if (__DEV__ && !ok) {
+      console.warn("No se encontró Drawer por encima de HomeScreen.");
+    }
+  };
 
+  // ⬇️ Helper para navegar SIEMPRE al HomeStack dentro del Drawer (Main)
+  const navigateToHomeStack = (
+    screen: "BienvenidaCursoN5" | "Calendario" | "Notas" | "CursoN5" | "ActividadesN5",
+    params?: Record<string, any>
+  ) => {
+    (navigation as any).navigate(
+      "Main" as never,                   // Drawer.Screen que contiene el HomeStackNavigator
+      { screen, params } as never        // HomeStack.Screen de destino
+    );
+  };
+
+  // ⬇️ Router unificado para tus botones actuales
   const go = (route: keyof RootStackParamList) => {
-    const parent = (navigation as any).getParent?.();
-    if (parent?.navigate) parent.navigate(route as never);
-    else (navigation as any).navigate(route as never);
+    switch (route) {
+      case "BienvenidaCursoN5":
+      case "Calendario":
+      case "Notas":
+      case "CursoN5":
+      case "ActividadesN5":
+        navigateToHomeStack(route);
+        break;
+
+      case "ProgresoN5":
+        // ⚠️ No existe en tu navegación actual, lo redirigimos a ActividadesN5 (ajusta si quieres CursoN5)
+        navigateToHomeStack("ActividadesN5");
+        break;
+
+      case "Perfil":
+      case "Notificaciones":
+      case "Chat":
+        // Estos están (o estarán) a nivel Drawer; usa el parent (Drawer) para ir directo
+        (navigation as any).getParent?.()?.navigate(route as never);
+        break;
+
+      default:
+        // Intento local por si en el futuro agregas rutas al HomeStack con el mismo nombre
+        (navigation as any).navigate(route as never);
+        break;
+    }
   };
 
   if (!ready) {
@@ -140,9 +181,7 @@ export default function HomeScreen(): React.JSX.Element {
 
             <Text style={styles.headerTitle}>Hola, {firstName}</Text>
 
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Perfil" as never)}
-            >
+            <TouchableOpacity onPress={() => (navigation as any).getParent?.()?.navigate("Perfil" as never)}>
               <AvatarWithFrame size={80} uri={avatarUri} />
             </TouchableOpacity>
           </View>
@@ -176,7 +215,7 @@ export default function HomeScreen(): React.JSX.Element {
             </View>
             <TouchableOpacity
               style={styles.progressBtn}
-              onPress={() => go("ProgresoN5")}
+              onPress={() => go("ProgresoN5")} // ⬅️ redirige a ActividadesN5 vía switch
               activeOpacity={0.9}
             >
               <Text style={styles.progressBtnText}>Ver progreso N5</Text>
@@ -225,14 +264,14 @@ export default function HomeScreen(): React.JSX.Element {
               title="Tanuki: Nivel N5"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n5_mapache.webp")}
-              onPress={() => go("BienvenidaCursoN5")}
+              onPress={() => go("BienvenidaCursoN5")} // ⬅️ ahora es navegación anidada al HomeStack
             />
             <CourseCard
               color="#b2453c"
               title="Kitsune: Nivel N4"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n4_zorro.webp")}
-              onPress={() => go("CursoN4")}
+              onPress={() => go("CursoN4")} // ⚠️ aún no está en Drawer/HomeStack; añade cuando exista
             />
             <CourseWide
               from="#f8b7a9"
@@ -240,7 +279,7 @@ export default function HomeScreen(): React.JSX.Element {
               title="Ryū: Nivel N3"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n3_leon.webp")}
-              onPress={() => go("CursoN3")}
+              onPress={() => go("CursoN3")} // ⚠️ igual que arriba
             />
           </View>
 
@@ -251,7 +290,7 @@ export default function HomeScreen(): React.JSX.Element {
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
             <TouchableOpacity
-              onPress={() => go("Notificaciones")}
+              onPress={() => go("Notificaciones")} // ⚠️ agrega esta pantalla al Drawer cuando la crees
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -271,7 +310,7 @@ export default function HomeScreen(): React.JSX.Element {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => go("Chat")}
+              onPress={() => go("Chat")} // ⚠️ agrega al Drawer en cuanto lo tengas
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -372,8 +411,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  hamburger: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  hamburgerIcon: { width: 80, height: 80, resizeMode: "contain" },
+// 🔴 Antes
+// hamburger: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+// hamburgerIcon: { width: 80, height: 80, resizeMode: "contain" },
+
+// 🟢 Después
+hamburger: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
+hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
+
   headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800" },
 
   progressCard: {

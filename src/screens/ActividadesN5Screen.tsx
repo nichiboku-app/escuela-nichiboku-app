@@ -1,7 +1,7 @@
 // src/screens/ActividadesN5Screen.tsx
-import { DrawerActions, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Image as ExpoImage } from 'expo-image'; // ⬅️ para "recortar" visualmente
+import { Image as ExpoImage } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import {
   Image,
@@ -22,12 +22,11 @@ type RootStackParamList = {
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+// ===== IMÁGENES / ICONOS =====
 const BG_PATTERN      = require('../../assets/images/pattern_seigaiha.webp');
-const ICON_DIVIDER    = require('../../assets/icons/n5/ic_title_divider.webp');
+const ICON_DIVIDER    = require('../../assets/icons/n5/ic_dragon_divider.webp');
 const ICON_HOURGLASS  = require('../../assets/icons/n5/ic_hourglass.webp');
 const ICON_CLOCK      = require('../../assets/icons/n5/ic_clock.webp');
-const ICON_SAKURA     = require('../../assets/icons/n5/ic_sakura_small.webp'); // opcional
-const ICON_HAMBURGER  = require('../../assets/icons/hamburger.webp'); // ya existente
 
 // Tarjetas
 const IMG_CARD_BIENV  = require('../../assets/images/card_bienvenida.webp');
@@ -50,24 +49,11 @@ export default function ActividadesN5Screen() {
   const navigation = useNavigation<Nav>();
   const [videoId, setVideoId] = useState<string | null>(null);
 
-  // Tu versión no acepta id en getParent; úsalo sin args
-  const openDrawer = () => {
-    const parent = navigation.getParent?.();
-    if (parent) {
-      (parent as any).openDrawer?.();
-      parent.dispatch?.(DrawerActions.openDrawer());
-      return;
-    }
-    navigation.dispatch(DrawerActions.openDrawer());
-  };
-
-  // Miniaturas de YouTube (agrega más URLs si quieres)
   const videos = useMemo(
     () => ['https://www.youtube.com/watch?v=SR_LUVpPqwU'],
     []
   );
 
-  // Abre el modal con el ID del video
   const handleOpenVideo = (url: string) => {
     const id = getYouTubeId(url);
     if (id) setVideoId(id);
@@ -76,22 +62,16 @@ export default function ActividadesN5Screen() {
   return (
     <ImageBackground source={BG_PATTERN} resizeMode="cover" style={styles.bg}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Barra superior */}
-        <View style={styles.topBar}>
-          <Pressable
-            onPress={openDrawer}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            style={styles.menuBtn}
-          >
-            <Image source={ICON_HAMBURGER} style={styles.menuIcon} />
-          </Pressable>
-        </View>
-
         {/* Encabezado */}
         <View style={styles.header}>
-          <Text style={styles.title}>Nivel 5 de japonés</Text>
-          <Text style={styles.title}>Nivel Mapache</Text>
+          <Text style={styles.titleCream}>NIVEL 5 DE JAPONÉS</Text>
+
+          <View style={styles.mapachePill}>
+            <Text style={styles.mapacheText}>Nivel Mapache</Text>
+          </View>
+
           <Image source={ICON_DIVIDER} style={styles.titleDivider} />
+
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Image source={ICON_HOURGLASS} style={styles.metaIcon} />
@@ -103,10 +83,6 @@ export default function ActividadesN5Screen() {
             </View>
           </View>
         </View>
-
-        {/* Sakura decorativa opcional */}
-        <Image source={ICON_SAKURA} style={styles.sakuraLeft} />
-        <Image source={ICON_SAKURA} style={styles.sakuraRight} />
 
         {/* Tarjetas */}
         <View style={styles.cardsRow}>
@@ -150,7 +126,7 @@ export default function ActividadesN5Screen() {
         </ScrollView>
       </ScrollView>
 
-      {/* Modal de reproducción (autoplay desactivado en el componente) */}
+      {/* Modal de reproducción */}
       <ModalYouTubePlayer videoId={videoId} onClose={() => setVideoId(null)} />
     </ImageBackground>
   );
@@ -171,7 +147,6 @@ function CourseCard({
 }) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
-      {/* Contenedor que recorta y redondea */}
       <View style={styles.cardMediaWrap}>
         <ExpoImage
           source={image}
@@ -229,55 +204,79 @@ function VideoCard({ url, onOpen }: { url: string; onOpen: () => void }) {
 
 /** ---------- ESTILOS ---------- */
 
+const GOLD = '#d4af37';
+const CREAM = '#F6E6C5'; // crema elegante
+
 const styles = StyleSheet.create({
   bg: { flex: 1, width: '100%', height: '100%' },
   container: { paddingBottom: 48, alignItems: 'center' },
 
-  // HAMBURGER
-  topBar: {
-    width: '100%',
-    paddingTop: 8,
-    paddingHorizontal: 22,
-    alignItems: 'flex-start',
-  },
-  menuBtn: { padding: 8, borderRadius: 12, marginTop: 10 },
-  menuIcon: { width: 40, height: 32, tintColor: '#111315', resizeMode: 'contain' },
+  header: { alignItems: 'center', marginTop: 16, marginBottom: 10 },
 
-  header: { alignItems: 'center', marginTop: 6, marginBottom: 10 },
-  title: { fontSize: 32, color: '#bf171c', fontWeight: '900', letterSpacing: 0.5 },
-  titleDivider: { width: 220, height: 95, marginTop: 6, resizeMode: 'contain' },
+  // Título crema
+  titleCream: {
+    fontSize: 30,
+    color: CREAM,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowRadius: 6,
+  },
+
+  // Pill "Nivel Mapache"
+  mapachePill: {
+    marginTop: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    backgroundColor: '#0b0b0b',
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: GOLD,
+  },
+  mapacheText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textAlign: 'center',
+  },
+
+  // Separador dragón
+  titleDivider: {
+    width: 220,
+    height: 80,
+    marginTop: 10,
+    resizeMode: 'contain',
+  },
 
   metaRow: {
-    marginTop: 10,
+    marginTop: 8,
     flexDirection: 'row',
     gap: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaIcon: { width: 58, height: 58, resizeMode: 'contain' },
-  metaText: { color: '#6a6a6a', fontSize: 14 },
-
-  sakuraLeft: { position: 'absolute', left: 8, top: 140, width: 72, height: 72, opacity: 0.7 },
-  sakuraRight: { position: 'absolute', right: 12, top: 430, width: 88, height: 88, opacity: 0.6 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  metaIcon: { width: 28, height: 28, resizeMode: 'contain' },
+  metaText: { color: CREAM, fontSize: 14, fontWeight: '700' },
 
   cardsRow: { flexDirection: 'row', gap: 16, paddingHorizontal: 18, marginTop: 12 },
 
-  // === Tarjeta de curso con marco negro ===
+  // Tarjeta de curso con BORDE DORADO
   card: {
     width: 170,
     backgroundColor: '#fff',
     borderRadius: 18,
     overflow: 'hidden',
-    borderWidth: 2,          // marco negro
-    borderColor: '#000',     // marco negro
+    borderWidth: 2,
+    borderColor: GOLD,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
   },
 
-  // Contenedor que recorta y mantiene radios arriba
   cardMediaWrap: {
     width: '100%',
     height: 140,
@@ -285,16 +284,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
   },
-
-  // Imagen "zoom" sutil para comer márgenes del asset
   cardMedia: {
     width: '100%',
     height: '100%',
-    transform: [{ scale: 1.15 }], // ajusta 1.03–1.12 según tu asset
+    transform: [{ scale: 1.12 }],
   },
 
-  cardFooter: { padding: 12, gap: 8 },
-  cardTitle: { fontWeight: '700', color: '#111315' },
+  cardFooter: { padding: 12, gap: 8, backgroundColor: '#fff' },
+  cardTitle: { fontWeight: '800', color: '#111315' },
 
   pillTrack: {
     height: 14,
@@ -319,7 +316,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#8a0f17',
   },
-  percentText: { alignSelf: 'flex-end', fontWeight: '700', color: '#111315' },
+  percentText: { alignSelf: 'flex-end', fontWeight: '800', color: '#111315' },
 
   cta: {
     marginTop: 18,
@@ -339,19 +336,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-  sectionTitle: { fontSize: 22, fontWeight: '800', color: '#6a6a6a' },
-  linkAll: { fontSize: 14, color: '#bf171c', fontWeight: '700' },
+  sectionTitle: { fontSize: 22, fontWeight: '900', color: CREAM },
+  linkAll: {
+    fontSize: 14,
+    color: CREAM,
+    fontWeight: '800',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: GOLD,
+  },
 
   videosRow: { paddingHorizontal: 18, gap: 12 },
 
-  // === Miniatura de video con marco negro y cover ===
+  // Miniatura de video
   videoThumb: {
     width: 180,
     height: 120,
     borderRadius: 10,
     overflow: 'hidden',
-    borderWidth: 2,          // marco negro
-    borderColor: '#000',     // marco negro
+    borderWidth: 2,
+    borderColor: '#000',
     backgroundColor: '#f0ece6',
   },
   videoImage: { width: '100%', height: '100%' },
