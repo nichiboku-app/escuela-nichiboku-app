@@ -1,14 +1,23 @@
+// types.ts
 export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
-  CrearCuenta: undefined;
   Login: undefined;
+  CrearCuenta: undefined; // si no la usas, puedes quitarla
   Bienvenida: undefined;
-  Home: undefined;
-  Notas: undefined;
-  Calendario: undefined;
-  BienvenidaCursoN5: undefined;
-  CursoN5: undefined;
-  ActividadesN5: undefined;
-  
+
+  Home: undefined;        // Drawer principal
+
+  // N5
+  N5Bienvenida: undefined;
+  TemaN5: { title?: string } | undefined;
+
+  // Ejercicios
+  VowelExercises: undefined;
 };
+
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}

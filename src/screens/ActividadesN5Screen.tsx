@@ -13,12 +13,10 @@ import {
   View,
 } from 'react-native';
 import ModalYouTubePlayer from '../components/ModalYouTubePlayer';
+import PetalRain from '../components/PetalRain';
 
-type RootStackParamList = {
-  ActividadesN5: undefined;
-  CursoN5: undefined;
-  TemaN5: { id: string; title: string };
-};
+// ⬇️ Usa el tipo global para no duplicar definiciones locales
+import type { RootStackParamList } from '../../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -61,6 +59,9 @@ export default function ActividadesN5Screen() {
 
   return (
     <ImageBackground source={BG_PATTERN} resizeMode="cover" style={styles.bg}>
+      {/* 🌟 Pétalos dorados cayendo */}
+      <PetalRain count={22} drift={70} sizeMin={26} sizeMax={54} />
+
       <ScrollView contentContainerStyle={styles.container}>
         {/* Encabezado */}
         <View style={styles.header}>
@@ -90,10 +91,9 @@ export default function ActividadesN5Screen() {
             image={IMG_CARD_BIENV}
             title={'Bienvenida y estructura\ndel curso'}
             progress={0.65}
-            onPress={() =>
-              navigation.navigate('TemaN5', { id: 'bienvenida', title: 'Bienvenida' })
-            }
+            onPress={() => navigation.navigate('N5Bienvenida')} // 👈 ruta única para la bienvenida del N5
           />
+
           <CourseCard
             image={IMG_CARD_HIRA}
             title={'Hiragana'}
