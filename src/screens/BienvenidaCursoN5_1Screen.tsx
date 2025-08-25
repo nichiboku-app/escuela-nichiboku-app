@@ -1,148 +1,211 @@
+// src/screens/BienvenidaCursoN5_1Screen.tsx
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Asset } from 'expo-asset';
-import React, { useEffect, useRef, useState } from 'react';
+import { Image as ExpoImage } from 'expo-image';
+import React from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Easing,
-    Image,
-    Pressable,
-    StatusBar,
-    StyleSheet,
-    useWindowDimensions,
-    View,
+  ImageBackground,
+  ScrollView,
+  StatusBar,
+  StyleProp,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewStyle,
 } from 'react-native';
+
+import SakuraFall from '../components/SakuraFall';
+import { BulletItem } from '../components/ui/BulletItem';
+import { GhostButton, PrimaryButton } from '../components/ui/Buttons';
+import { ChipTag } from '../components/ui/ChipTag';
+// import GoldCard from '../components/ui/GoldCard'; // <- ya no lo usamos
 
 type RootStackParamList = {
   BienvenidaCursoN5_1: undefined;
   CursoN5: undefined;
+  TemaN5: undefined;
+  EntradaActividadesN5: undefined;
 };
-
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// === ARCHIVO DE IMAGEN ===
-const HERO_SRC: number = require('../../assets/images/bienvenida1_cropped.png');
+// imágenes
+const HERO_SRC     = require('../../assets/images/imagenBienvenida.webp');
+const BG_IMG       = require('../../assets/images/fondo3.webp');
+const SAKURA_DECOR = require('../../assets/icons/sakura1.webp');
+const MARCO_LEFT   = require('../../assets/icons/marco1.webp');
+const MARCO_RIGHT  = require('../../assets/icons/marco2.webp');
 
-// === ENCUADRE (0 a 1) ===
-// 0 = alinear a la izquierda/arriba, 0.5 = centro, 1 = derecha/abajo
-const FOCUS_X = 0.92;  // mueve horizontal (0 izq, 1 der)
-const FOCUS_Y = -9;  // mueve vertical   (0 arriba, 1 abajo)
-
-// === ZOOM / ANCHO VISIBLE ===
-// 1 = full-bleed. Menor que 1 = menos zoom (se ve “menos ancho”).
-const SCALE_BIAS = 0.72;
-
-// === Asegura sobrante vertical para que FOCUS_Y sí mueva ===
-// 0.05–0.15 suele ir bien (5–15% de recorte vertical)
-const EXTRA_CROP_Y = -0.23;
-
-export default function BienvenidaCursoN5_1Screen() {
-  const navigation = useNavigation<Nav>();
-  const { width: W, height: H } = useWindowDimensions();
-
-  const [ready, setReady] = useState(false);
-  const [imgW, setImgW] = useState<number>(0);
-  const [imgH, setImgH] = useState<number>(0);
-
-  // Animación (fade + zoom-out)
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1.04)).current;
-
-  useEffect(() => {
-    (async () => {
-      await Asset.fromModule(HERO_SRC).downloadAsync();
-      const res = Image.resolveAssetSource(HERO_SRC);
-      setImgW(res?.width ?? 0);
-      setImgH(res?.height ?? 0);
-      setReady(true);
-
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 600,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 900,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    })();
-  }, [opacity, scaleAnim]);
-
-  // === Cálculo "cover" manual con control de zoom y PAN ===
-  // Escala mínima para cubrir la pantalla
-  const baseScale = imgW && imgH ? Math.max(W / imgW, H / imgH) : 1;
-
-  // Aplicamos el sesgo de zoom (para “menos ancho”)
-  let coverScale = baseScale * SCALE_BIAS;
-
-  // --- Clave: garantizar SOBRANTE vertical ---
-  // Si la altura escalada no llega a H (no hay overflowY), forzamos un poco de zoom
-  // para que sí exista recorte vertical y FOCUS_Y pueda mover hacia arriba/abajo.
-  const scaledHTest = imgH * coverScale;
-  if (imgW && imgH && scaledHTest <= H) {
-    // al menos cubrir la altura + un extra para permitir PAN vertical
-    coverScale = (H / imgH) * (1 + EXTRA_CROP_Y);
-  }
-
-  // Tamaños finales
-  const scaledW = Math.ceil(imgW * coverScale);
-  const scaledH = Math.ceil(imgH * coverScale);
-
-  // Sobrante a recortar en cada eje (si no hay, queda 0)
-  const overflowX = Math.max(0, scaledW - W);
-  const overflowY = Math.max(25, scaledH - H);
-
-  // Offset según el foco (0..1)
-  const offsetLeft = -Math.round(overflowX * FOCUS_X);
-  const offsetTop  = -Math.round(overflowY * FOCUS_Y);
-
-  const goNext = () => navigation.navigate('CursoN5');
-
+function Decor({ source, style }: { source: any; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={styles.root}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-      <Pressable style={styles.full} onPress={goNext}>
-        {!ready && (
-          <View style={styles.loader}>
-            <ActivityIndicator size="large" />
-          </View>
-        )}
-
-        {ready && (
-          <Animated.Image
-            source={HERO_SRC}
-            style={[
-              styles.image,
-              {
-                width: scaledW || W,
-                height: scaledH || H,
-                left: offsetLeft,
-                top: offsetTop,
-                opacity,
-                transform: [{ scale: scaleAnim }],
-              },
-            ]}
-            resizeMode="stretch" // controlamos proporción nosotros
-          />
-        )}
-      </Pressable>
+    <View pointerEvents="none" style={style}>
+      <ExpoImage source={source} style={StyleSheet.absoluteFill} contentFit="contain" />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f6f2ea' },
-  full: { flex: 1, overflow: 'hidden' }, // recorta lo que sobresale
-  loader: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
+function FrameOverlay({ source, style }: { source: any; style?: StyleProp<ViewStyle> }) {
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, style]}>
+      <ExpoImage source={source} style={StyleSheet.absoluteFill} contentFit="cover" />
+    </View>
+  );
+}
+
+export default function BienvenidaCursoN5_1Screen() {
+  const navigation = useNavigation<Nav>();
+  useWindowDimensions();
+
+  return (
+    <View style={s.root}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
+      {/* Fondo con imagen */}
+      <ImageBackground source={BG_IMG} resizeMode="cover" style={StyleSheet.absoluteFillObject} />
+
+      {/* Pétalos al fondo */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <SakuraFall count={18} baseDuration={10000} wind={36} sway={26} opacity={0.25} />
+      </View>
+
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+        <Text style={s.h1}>Curso de Japonés N5</Text>
+        <Text style={s.sub}>Presentación del nivel y acceso a tus actividades.</Text>
+
+        {/* HERO */}
+        <View style={s.heroFrameGold}>
+          <ExpoImage source={HERO_SRC} style={s.heroImage} contentFit="cover" transition={250} />
+        </View>
+
+        {/* ¿Qué aprenderás?  —— tarjeta blanca */}
+        <View style={s.cardWhiteFull}>
+          <Text style={s.cardTitle}>¿Qué aprenderás?</Text>
+          <View style={{ marginTop: 6 }}>
+            <BulletItem>Hiragana y Katakana completos</BulletItem>
+            <BulletItem>Vocabulario esencial (saludos, familia, tiempo)</BulletItem>
+            <BulletItem>Gramática básica: です／ます, これ・それ・あれ, partículas は・が・を・に</BulletItem>
+            <BulletItem>Verbos en forma -ます (presente, pasado, negativo)</BulletItem>
+            <BulletItem>Lectura y comprensión auditiva</BulletItem>
+            <BulletItem>Entre otros 100 temas más…</BulletItem>
+          </View>
+          <Decor source={SAKURA_DECOR} style={s.sakuraCorner} />
+        </View>
+
+        {/* Requisitos / Método —— tarjetas blancas */}
+        <View style={s.row}>
+          <View style={[s.col, s.cardWhiteFull]}>
+            {/* Si quieres recuperar los marcos dorados, descomenta: */}
+            {/* <FrameOverlay source={MARCO_LEFT} style={s.cardFrameOverlay} /> */}
+            <Text style={s.cardTitle}>Requisitos</Text>
+            <BulletItem>Cero o poca base de japonés</BulletItem>
+            <BulletItem>15 min diarios de estudio recomendado</BulletItem>
+            <BulletItem>Cuaderno para notas ✍️</BulletItem>
+          </View>
+
+          <View style={[s.col, s.cardWhiteFull]}>
+            {/* <FrameOverlay source={MARCO_RIGHT} style={s.cardFrameOverlay} /> */}
+            <Text style={s.cardTitle}>Método</Text>
+            <BulletItem>Actividades interactivas y mini-exámenes</BulletItem>
+            <BulletItem>Audio nativo para pronunciación</BulletItem>
+            <BulletItem>Gamificación: puntos y logros</BulletItem>
+          </View>
+        </View>
+
+        {/* Incluye —— tarjeta blanca */}
+        <View style={s.cardWhiteFull}>
+          <Text style={s.cardTitle}>Incluye</Text>
+          <View style={s.chips}>
+            <ChipTag icon={<Ionicons name="headset" size={14} color="#A93226" />} label="Escucha" />
+            <ChipTag icon={<Ionicons name="mic" size={14} color="#A93226" />} label="Pronunciación" />
+            <ChipTag icon={<Ionicons name="book" size={14} color="#A93226" />} label="Lecturas" />
+            <ChipTag icon={<MaterialCommunityIcons name="gamepad-variant-outline" size={14} color="#A93226" />} label="Juegos" />
+            <ChipTag icon={<Ionicons name="stats-chart" size={14} color="#A93226" />} label="Progreso" />
+          </View>
+        </View>
+
+        <PrimaryButton
+          title="Entrar a las actividades N5"
+          onPress={() => navigation.navigate('EntradaActividadesN5')}
+        />
+
+        <View style={s.actionsRow}>
+          <GhostButton title="Examen diagnóstico" onPress={() => {}} style={{ flex: 1 }} />
+          <GhostButton title="Comprar membresía" onPress={() => {}} style={{ flex: 1 }} />
+        </View>
+
+        <Text style={s.tip}>
+          Consejo: completa 1–2 actividades por día. Tu avance y logros aparecerán aquí cuando conectemos tu perfil.
+        </Text>
+      </ScrollView>
+
+      {/* Pétalos por delante — ultra sutil para no teñir el blanco */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <SakuraFall count={8} baseDuration={9500} wind={40} sway={28} opacity={0.06} />
+      </View>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#ECEFF3' },
+  content: { padding: 20, paddingBottom: 40, gap: 14 },
+
+  h1: { fontSize: 28, fontWeight: '800', color: '#1A1A1A', textAlign: 'left', marginTop: 55 },
+  sub: { color: '#444', marginTop: 15, marginBottom: 6 },
+
+  // TARJETA BLANCA PURA
+  cardWhiteFull: {
+    backgroundColor: '#FFFFFF',   // <-- BLANCO PURO
+    borderColor: '#E6EAF0',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,          // sombra mínima para no “cremar”
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
+    overflow: 'hidden',
   },
-  image: { position: 'absolute' },
+
+  // HERO
+  heroFrameGold: {
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    borderWidth: 4,
+    borderColor: '#C8A046',
+    overflow: 'hidden',
+    alignSelf: 'center',
+    width: '100%',
+    aspectRatio: 16 / 9,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  heroImage: { width: '100%', height: '100%' },
+
+  row: { flexDirection: 'row', gap: 14 },
+  col: { flex: 1 },
+
+  cardTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+
+  actionsRow: { flexDirection: 'row', gap: 12 },
+  tip: { color: '#444', fontSize: 12, marginTop: 8, textAlign: 'center' },
+
+  sakuraCorner: {
+    position: 'absolute',
+    right: -16,
+    bottom: 8,
+    width: 120,
+    height: 90,
+    opacity: 0.85,
+  },
+  cardFrameOverlay: {
+    left: -2, right: -2, top: -2, bottom: -2,
+    opacity: 0.4,
+  },
 });

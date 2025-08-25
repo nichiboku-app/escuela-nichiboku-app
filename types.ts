@@ -3,10 +3,12 @@ export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
-  CrearCuenta: undefined; // si no la usas, puedes quitarla
+  // Si no usas CrearCuenta, coméntalo o elimínalo
+  CrearCuenta?: undefined;
   Bienvenida: undefined;
 
   Home: undefined;        // Drawer principal
+    EntradaActividadesN5: undefined;
 
   // N5
   N5Bienvenida: undefined;
