@@ -18,6 +18,10 @@ import VowelExercisesScreen from './src/screens/VowelExercisesScreen';
 // 👉 IntroJapones (destino final tras el logro)
 import IntroJaponesScreen from './src/screens/IntroJaponesScreen';
 
+// 👉 NUEVO: pantallas que faltaban registrar
+import OrigenesDelIdiomaScreen from './src/screens/N5/OrigenesDelIdiomaScreen';
+import SubtemaScreen from './src/screens/N5/SubtemaScreen';
+
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -58,6 +62,18 @@ export default function App() {
           <Stack.Screen
             name="IntroJapones"
             component={IntroJaponesScreen}
+            options={{ headerShown: false }}
+          />
+
+          {/* 👇 NUEVAS rutas registradas (no moví nada de lo tuyo) */}
+          <Stack.Screen
+            name="OrigenesDelIdioma"
+            component={OrigenesDelIdiomaScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Subtema"
+            component={SubtemaScreen}
             options={{ headerShown: false }}
           />
 

@@ -22,7 +22,14 @@ import EditIcon from '../../assets/icons/edit.svg';
 
 import dividerImg from '../../assets/icons/DividerIcon.webp';
 
-import { doc, onSnapshot } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  onSnapshot as onSnapshotCol,
+  orderBy,
+  query,
+} from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 import { pickAndSaveAvatar } from '../services/uploadAvatar';
 
@@ -37,15 +44,25 @@ const RING_WIDTH = 13;
 const RING_GAP = 18;
 const AVATAR_INNER = AVATAR_OUTER - 2 * (RING_WIDTH + RING_GAP);
 
-// Cache-busting helper para imágenes (evita que se quede la foto anterior en caché)
+// Cache-busting helper
 function bust(url: string, v?: number | string) {
   if (!v) return url;
   return url.includes('?') ? `${url}&v=${v}` : `${url}?v=${v}`;
 }
 
+// 🔸 Mapa de iconos por id de logro (ajústalo a tus assets)
+const ACH_SRC: Record<string, ImageSourcePropType> = {
+  logro_n1: require('../../assets/icons/logro_n11.webp'),
+  logro_n2: require('../../assets/icons/logro_n2.webp'),
+  logro_n3: require('../../assets/icons/logro_n3.webp'),
+  forja_destino: require('../../assets/icons/logro_n11.webp'),
+};
+const DEFAULT_ACH = require('../../assets/icons/logro_n1.webp');
+
 export default function PerfilScreen() {
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [achievements, setAchievements] = useState<Array<{ id: string; sub?: string }>>([]);
 
   const onPickCover = () => {};
   const onEditName = () => {};
@@ -55,7 +72,7 @@ export default function PerfilScreen() {
       if (updating) return;
       setUpdating(true);
       const url = await pickAndSaveAvatar();
-      if (url) setAvatarSrc(url); // refresca en pantalla al instante
+      if (url) setAvatarSrc(url);
     } catch (e: any) {
       Alert.alert('Ups', e?.message ?? 'No se pudo actualizar tu foto.');
     } finally {
@@ -63,15 +80,14 @@ export default function PerfilScreen() {
     }
   };
 
-  // Escucha cambios en Firestore (photoURL + avatarUpdatedAt).
-  // Mantiene compatibilidad con photoBase64 y con auth.photoURL como último fallback.
+  // Foto de perfil desde Firestore/auth
   useEffect(() => {
     const u = auth.currentUser;
     if (!u) return;
 
     const unsub = onSnapshot(doc(db, 'Usuarios', u.uid), (snap) => {
       const url = snap.get('photoURL') as string | undefined;
-      const v   = snap.get('avatarUpdatedAt') as number | string | undefined;
+      const v = snap.get('avatarUpdatedAt') as number | string | undefined;
       const b64 = snap.get('photoBase64') as string | undefined;
 
       if (url) {
@@ -88,8 +104,27 @@ export default function PerfilScreen() {
     return () => unsub();
   }, []);
 
-  const soundRef = useRef<Audio.Sound | null>(null);
+  // 🔥 Suscripción a logros acumulados del usuario (Usuarios/{uid}/logros)
+  useEffect(() => {
+    const u = auth.currentUser;
+    if (!u) return;
 
+    const colRef = collection(db, 'Usuarios', u.uid, 'logros');
+    const q = query(colRef, orderBy('unlockedAt', 'desc'));
+
+    const unsub = onSnapshotCol(q, (snap) => {
+      const rows = snap.docs.map((d) => ({
+        id: (d.get('id') as string) || d.id,
+        sub: (d.get('sub') as string) || undefined,
+      }));
+      setAchievements(rows);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // Sonido al entrar
+  const soundRef = useRef<Audio.Sound | null>(null);
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
@@ -104,7 +139,7 @@ export default function PerfilScreen() {
 
           const { sound } = await Audio.Sound.createAsync(
             require('../../assets/sounds/enter_profile.mp3'),
-            { shouldPlay: true, volume: 0.6, isLooping: false }
+            { shouldPlay: true, volume: 0.6, isLooping: false },
           );
 
           if (!mounted) {
@@ -124,7 +159,7 @@ export default function PerfilScreen() {
           soundRef.current = null;
         }
       };
-    }, [])
+    }, []),
   );
 
   return (
@@ -208,7 +243,7 @@ export default function PerfilScreen() {
             <Text style={styles.premiumTxt}>Obtener premium</Text>
           </TouchableOpacity>
 
-          {/* Stats + separadores */}
+          {/* Stats + separadores (puedes conectar XP real luego) */}
           <View style={styles.statsRow}>
             <Stat label="Puntos" value="825" />
             <View style={styles.dividerWrap}>
@@ -288,7 +323,7 @@ export default function PerfilScreen() {
 
             {/* Fila 2 */}
             <View style={styles.row}>
-              {/* Logros */}
+              {/* Logros — dinámico desde Firestore */}
               <Card>
                 <Image
                   source={
@@ -304,26 +339,17 @@ export default function PerfilScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.hScroll}
                 >
-                  <Achievement
-                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
-                    sub="N1"
-                  />
-                  <Achievement
-                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
-                    sub="N1"
-                  />
-                  <Achievement
-                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
-                    sub="N1"
-                  />
-                  <Achievement
-                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
-                    sub="N2"
-                  />
-                  <Achievement
-                    src={require('../../assets/icons/logro_n1.webp') as ImageSourcePropType}
-                    sub="N3"
-                  />
+                  {achievements.length === 0 ? (
+                    <Text style={styles.emptyAch}>Aún no tienes logros — ¡comienza una actividad!</Text>
+                  ) : (
+                    achievements.map((a, idx) => (
+                      <Achievement
+                        key={`${a.id}-${idx}`}
+                        src={ACH_SRC[a.id] ?? DEFAULT_ACH}
+                        sub={a.sub ?? a.id}
+                      />
+                    ))
+                  )}
                 </ScrollView>
               </Card>
 
@@ -428,10 +454,7 @@ function Achievement({ src, sub }: { src: ImageSourcePropType; sub: string }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#ffffff' },
   scroll: { flex: 1 },
-  cc: {
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-  },
+  cc: { paddingBottom: 16, backgroundColor: '#ffffff' },
 
   /* Fondo montañas */
   bg: { width: '100%', height: BG_HEIGHT, backgroundColor: '#fff' },
@@ -478,7 +501,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#ddd',
   },
-  // Sin porcentajes ni transforms con strings
   avatarImage: {
     width: AVATAR_INNER * 1.15,
     height: AVATAR_INNER * 1.15,
@@ -546,14 +568,8 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 22, fontWeight: '900' },
 
   /* BLOQUE INFERIOR */
-  bottomWrap: {
-    marginTop: 16,
-    gap: 14,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 14,
-  },
+  bottomWrap: { marginTop: 16, gap: 14 },
+  row: { flexDirection: 'row', gap: 14 },
 
   cardInner: {
     flex: 1,
@@ -563,13 +579,8 @@ const styles = StyleSheet.create({
     minHeight: 150,
     justifyContent: 'flex-start',
   },
-  cardInnerImg: {
-    borderRadius: 20,
-  },
-  bgSoft: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.14,
-  },
+  cardInnerImg: { borderRadius: 20 },
+  bgSoft: { ...StyleSheet.absoluteFillObject, opacity: 0.14 },
 
   cardTitle: {
     fontSize: 18,
@@ -617,19 +628,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   achIcon: { width: 40, height: 40 },
-  achSub: {
-    textAlign: 'center',
-    fontSize: 12,
-    marginTop: 6,
-    color: '#3b2b1b',
-  },
+  achSub: { textAlign: 'center', fontSize: 12, marginTop: 6, color: '#3b2b1b' },
 
-  gamesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    justifyContent: 'center',
-  },
+  gamesRow: { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center' },
   gameIcon: { width: 56, height: 56 },
   pointsBadge: {
     flexDirection: 'row',
@@ -642,4 +643,7 @@ const styles = StyleSheet.create({
   },
   pointsImg: { width: 20, height: 20 },
   pointsTxt: { color: '#2f7a3b', fontWeight: '800' },
+
+  // Mensaje cuando no hay logros todavía
+  emptyAch: { color: '#6b6b6b', fontStyle: 'italic', paddingHorizontal: 8 },
 });

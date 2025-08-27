@@ -1,21 +1,25 @@
+// src/types.ts
+export type N5SubtemaKey = 'origenes' | 'escritura' | 'cultura';
+
 export type RootStackParamList = {
+  // Arranque / auth / home
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
-  // CrearCuenta?: undefined; // si no se usa, deja comentado o bórralo
   Bienvenida: undefined;
-
   Home: undefined;
-
-  // NAVEGACIÓN N5 / INTRO
-  EntradaActividadesN5: undefined; // pantalla del logro
-  IntroJapones: undefined;         // pantalla de introducción (destino)
 
   // N5
   N5Bienvenida: undefined;
-  TemaN5: { title?: string } | undefined;
+  EntradaActividadesN5: undefined;
+  IntroJapones: undefined;
+  OrigenesDelIdioma: undefined;
 
-  // Ejercicios
+  // 👇 Subtema genérico con parámetro OBLIGATORIO
+  Subtema: { key: N5SubtemaKey };
+
+  // Otros
+  TemaN5: { title?: string } | undefined;
   VowelExercises: undefined;
 };
 
