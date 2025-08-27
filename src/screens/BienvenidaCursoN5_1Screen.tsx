@@ -20,13 +20,15 @@ import SakuraFall from '../components/SakuraFall';
 import { BulletItem } from '../components/ui/BulletItem';
 import { GhostButton, PrimaryButton } from '../components/ui/Buttons';
 import { ChipTag } from '../components/ui/ChipTag';
-// import GoldCard from '../components/ui/GoldCard'; // <- ya no lo usamos
+import { getLastLocation } from '../services/progress';
 
+// ===== Tipos locales (puedes reemplazar por tu RootStackParamList global) =====
 type RootStackParamList = {
   BienvenidaCursoN5_1: undefined;
   CursoN5: undefined;
-  TemaN5: undefined;
+  TemaN5: undefined | { title?: string };
   EntradaActividadesN5: undefined;
+  IntroJapones: undefined;
 };
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -44,7 +46,6 @@ function Decor({ source, style }: { source: any; style?: StyleProp<ViewStyle> })
     </View>
   );
 }
-
 function FrameOverlay({ source, style }: { source: any; style?: StyleProp<ViewStyle> }) {
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, style]}>
@@ -56,6 +57,46 @@ function FrameOverlay({ source, style }: { source: any; style?: StyleProp<ViewSt
 export default function BienvenidaCursoN5_1Screen() {
   const navigation = useNavigation<Nav>();
   useWindowDimensions();
+
+  // 🔧 navegar al root aunque estemos en un stack anidado
+  const goRoot = (route: keyof RootStackParamList, params?: any) => {
+    const parent = navigation.getParent();
+    if (parent) (parent as any).navigate(route as any, params);
+    else (navigation as any).navigate(route as any, params);
+  };
+
+  // Mapa de normalización de nombres de ruta
+  const routeMap = {
+    IntroJapones: 'IntroJapones',
+    IntroJaponesScreen: 'IntroJapones',
+    EntradaActividadesN5: 'EntradaActividadesN5',
+    TemaN5: 'TemaN5',
+    CursoN5: 'CursoN5',
+    BienvenidaCursoN5_1: 'BienvenidaCursoN5_1',
+  } as const;
+  type RouteMapKey = keyof typeof routeMap;
+  const normalizeRoute = (r?: string): keyof RootStackParamList | null =>
+    r && (routeMap as Record<string, keyof RootStackParamList>)[r] ? routeMap[r as RouteMapKey] : null;
+
+  // 👇 Handler del botón "Continuar donde te quedaste"
+  type SavedLoc = string | { route: string; params?: any } | null;
+  const handleContinue = async () => {
+    try {
+      const lastRaw = (await getLastLocation()) as SavedLoc;
+
+      const lastRoute = typeof lastRaw === 'string' ? lastRaw : lastRaw?.route;
+      const params    = typeof lastRaw === 'string' ? undefined : lastRaw?.params;
+
+      const normalized = normalizeRoute(lastRoute);
+      if (normalized) {
+        goRoot(normalized, params ?? {});
+      } else {
+        goRoot('EntradaActividadesN5'); // fallback
+      }
+    } catch {
+      goRoot('EntradaActividadesN5');
+    }
+  };
 
   return (
     <View style={s.root}>
@@ -78,7 +119,7 @@ export default function BienvenidaCursoN5_1Screen() {
           <ExpoImage source={HERO_SRC} style={s.heroImage} contentFit="cover" transition={250} />
         </View>
 
-        {/* ¿Qué aprenderás?  —— tarjeta blanca */}
+        {/* ¿Qué aprenderás? —— tarjeta blanca */}
         <View style={s.cardWhiteFull}>
           <Text style={s.cardTitle}>¿Qué aprenderás?</Text>
           <View style={{ marginTop: 6 }}>
@@ -95,7 +136,6 @@ export default function BienvenidaCursoN5_1Screen() {
         {/* Requisitos / Método —— tarjetas blancas */}
         <View style={s.row}>
           <View style={[s.col, s.cardWhiteFull]}>
-            {/* Si quieres recuperar los marcos dorados, descomenta: */}
             {/* <FrameOverlay source={MARCO_LEFT} style={s.cardFrameOverlay} /> */}
             <Text style={s.cardTitle}>Requisitos</Text>
             <BulletItem>Cero o poca base de japonés</BulletItem>
@@ -124,10 +164,14 @@ export default function BienvenidaCursoN5_1Screen() {
           </View>
         </View>
 
-        <PrimaryButton
-          title="Entrar a las actividades N5"
-          onPress={() => navigation.navigate('EntradaActividadesN5')}
-        />
+        {/* CTA: Continuar + Entrar */}
+        <View style={s.ctaCol}>
+          <PrimaryButton title="Continuar donde te quedaste" onPress={handleContinue} />
+          <PrimaryButton
+            title="Entrar a las actividades N5"
+            onPress={() => goRoot('IntroJapones')}
+          />
+        </View>
 
         <View style={s.actionsRow}>
           <GhostButton title="Examen diagnóstico" onPress={() => {}} style={{ flex: 1 }} />
@@ -139,7 +183,7 @@ export default function BienvenidaCursoN5_1Screen() {
         </Text>
       </ScrollView>
 
-      {/* Pétalos por delante — ultra sutil para no teñir el blanco */}
+      {/* Pétalos por delante — ultra sutil */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <SakuraFall count={8} baseDuration={9500} wind={40} sway={28} opacity={0.06} />
       </View>
@@ -156,13 +200,13 @@ const s = StyleSheet.create({
 
   // TARJETA BLANCA PURA
   cardWhiteFull: {
-    backgroundColor: '#FFFFFF',   // <-- BLANCO PURO
+    backgroundColor: '#FFFFFF',
     borderColor: '#E6EAF0',
     borderWidth: 1,
     borderRadius: 14,
     padding: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.03,          // sombra mínima para no “cremar”
+    shadowOpacity: 0.03,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 1,
@@ -192,6 +236,9 @@ const s = StyleSheet.create({
 
   cardTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+
+  // CTA column
+  ctaCol: { gap: 10, marginTop: 6 },
 
   actionsRow: { flexDirection: 'row', gap: 12 },
   tip: { color: '#444', fontSize: 12, marginTop: 8, textAlign: 'center' },
