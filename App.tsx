@@ -1,4 +1,3 @@
-// App.tsx
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -12,9 +11,12 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import SplashScreen from './src/screens/SplashScreen';
 
 // N5
-import N5Bienvenida from './src/screens/N5/Bienvenida'; // ← pantalla “roja”
+import N5Bienvenida from './src/screens/N5/Bienvenida';
 import TemaN5 from './src/screens/N5/TemaN5';
 import VowelExercisesScreen from './src/screens/VowelExercisesScreen';
+
+// 👉 IntroJapones (destino final tras el logro)
+import IntroJaponesScreen from './src/screens/IntroJaponesScreen';
 
 import { RootStackParamList } from './types';
 
@@ -37,25 +39,34 @@ export default function App() {
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
-          {/* <Stack.Screen name="CrearCuenta" component={CrearCuentaScreen} /> */}
           <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
 
-          {/* Drawer principal (sin su propio NavigationContainer) */}
+          {/* Drawer principal */}
           <Stack.Screen name="Home" component={AppDrawerNavigator} />
 
           {/* N5 */}
           <Stack.Screen name="N5Bienvenida" component={N5Bienvenida} />
+
+          {/* Pantalla del logro */}
           <Stack.Screen
-  name="EntradaActividadesN5"
-  component={EntradaActividadesN5Screen}
-  options={{ headerShown: false }}
-/>
+            name="EntradaActividadesN5"
+            component={EntradaActividadesN5Screen}
+            options={{ headerShown: false }}
+          />
+
+          {/* Destino final después del logro */}
+          <Stack.Screen
+            name="IntroJapones"
+            component={IntroJaponesScreen}
+            options={{ headerShown: false }}
+          />
+
           <Stack.Screen
             name="TemaN5"
             component={TemaN5}
             options={({ route }) => ({
               headerShown: true,
-              title: route?.params?.title ?? 'Hiragana',
+              title: (route?.params as any)?.title ?? 'Hiragana',
             })}
           />
 

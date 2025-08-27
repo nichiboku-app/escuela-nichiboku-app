@@ -1,14 +1,15 @@
-// types.ts
 export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
-  // Si no usas CrearCuenta, coméntalo o elimínalo
-  CrearCuenta?: undefined;
+  // CrearCuenta?: undefined; // si no se usa, deja comentado o bórralo
   Bienvenida: undefined;
 
-  Home: undefined;        // Drawer principal
-    EntradaActividadesN5: undefined;
+  Home: undefined;
+
+  // NAVEGACIÓN N5 / INTRO
+  EntradaActividadesN5: undefined; // pantalla del logro
+  IntroJapones: undefined;         // pantalla de introducción (destino)
 
   // N5
   N5Bienvenida: undefined;
