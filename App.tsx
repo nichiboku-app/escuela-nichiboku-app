@@ -1,3 +1,4 @@
+// App.tsx
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -12,13 +13,15 @@ import SplashScreen from './src/screens/SplashScreen';
 
 // N5
 import N5Bienvenida from './src/screens/N5/Bienvenida';
+import CulturaScreen from './src/screens/N5/CulturaScreen';
+import EscrituraScreen from './src/screens/N5/EscrituraScreen';
 import TemaN5 from './src/screens/N5/TemaN5';
 import VowelExercisesScreen from './src/screens/VowelExercisesScreen';
 
 // 👉 IntroJapones (destino final tras el logro)
 import IntroJaponesScreen from './src/screens/IntroJaponesScreen';
 
-// 👉 NUEVO: pantallas que faltaban registrar
+// 👉 NUEVO: pantallas registradas
 import OrigenesDelIdiomaScreen from './src/screens/N5/OrigenesDelIdiomaScreen';
 import SubtemaScreen from './src/screens/N5/SubtemaScreen';
 
@@ -65,18 +68,33 @@ export default function App() {
             options={{ headerShown: false }}
           />
 
-          {/* 👇 NUEVAS rutas registradas (no moví nada de lo tuyo) */}
+          {/* =========================
+               NUEVAS PANTALLAS N5
+             ========================= */}
           <Stack.Screen
             name="OrigenesDelIdioma"
             component={OrigenesDelIdiomaScreen}
-            options={{ headerShown: false }}
+            options={{ headerShown: true, title: 'Orígenes del idioma' }}
           />
+          <Stack.Screen
+            name="EscrituraN5"
+            component={EscrituraScreen}
+            options={{ headerShown: true, title: 'Sistemas de escritura' }}
+          />
+          <Stack.Screen
+            name="CulturaN5"
+            component={CulturaScreen}
+            options={{ headerShown: true, title: 'Cultura básica' }}
+          />
+
+          {/* Mantén Subtema si aún lo usas en botones antiguos */}
           <Stack.Screen
             name="Subtema"
             component={SubtemaScreen}
             options={{ headerShown: false }}
           />
 
+          {/* Tema N5 con título dinámico */}
           <Stack.Screen
             name="TemaN5"
             component={TemaN5}

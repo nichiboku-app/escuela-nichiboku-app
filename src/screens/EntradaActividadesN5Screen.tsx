@@ -16,6 +16,7 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
+import type { RootStackParamList as AppRoutes } from '../../types'; // 👈 usa tu tipo global
 import { rememberLocation } from '../services/progress';
 
 // ===== ASSETS =====
@@ -33,21 +34,20 @@ const ICON_KOKESHI  = require('../../assets/icons/intro/icon_kokeshi.webp');
 const ICON_BOOK     = require('../../assets/icons/intro/icon_book_info.webp');
 
 // ===== NAV TYPES =====
-type RootStackParamList = {
-  IntroJapones: undefined;
-  VideoIntro: undefined;
-  QuizCultural: undefined;
-  GifSaludo: undefined;
-  Subtema: { key: 'origenes' | 'escritura' | 'cultura' };
+// Extiende tu RootStackParamList con las rutas de actividades usadas aquí
+type LocalNavParams = AppRoutes & {
+  VideoIntro?: undefined;
+  QuizCultural?: undefined;
+  GifSaludo?: undefined;
 };
-type Nav = NativeStackNavigationProp<RootStackParamList>;
+type Nav = NativeStackNavigationProp<LocalNavParams>;
 
 export default function IntroJaponesScreen() {
   const navigation = useNavigation<Nav>();
 
-  const go = <T extends keyof RootStackParamList>(route: T, params?: RootStackParamList[T]) => {
+  const go = <T extends keyof LocalNavParams>(route: T, params?: LocalNavParams[T]) => {
     rememberLocation('IntroJapones');
-    (navigation as any).navigate(route, params as any);
+    (navigation as any).navigate(route as string, params as any);
   };
 
   // 3 columnas perfectamente alineadas
@@ -86,21 +86,21 @@ export default function IntroJaponesScreen() {
               bg="#DCDCE6"
               icon={ICON_SCROLL}
               label="Orígenes del idioma"
-              onPress={() => go('Subtema', { key: 'origenes' })}
+              onPress={() => go('OrigenesDelIdioma')}
               style={{ width: CARD_W }}
             />
             <CardSolid
               bg="#9EB2A5"
               icon={ICON_BRUSH}
               label="Sistemas de escritura"
-              onPress={() => go('Subtema', { key: 'escritura' })}
+              onPress={() => go('EscrituraN5')}
               style={{ width: CARD_W }}
             />
             <CardSolid
               bg="#EF6C73"
               icon={ICON_GEISHA}
               label="Cultura básica"
-              onPress={() => go('Subtema', { key: 'cultura' })}
+              onPress={() => go('CulturaN5')}
               style={{ width: CARD_W }}
             />
           </View>
@@ -111,9 +111,9 @@ export default function IntroJaponesScreen() {
           <Text style={s.sectionTitle}>Actividades</Text>
 
           <View style={s.row}>
-            <CardBig icon={ICON_PLAY}    label="Video introductorio" onPress={() => go('VideoIntro')}   bg="#7A1E2B" />
-            <CardBig icon={ICON_QUIZ}    label="Quiz cultural"       onPress={() => go('QuizCultural')} bg="#1F3A4A" />
-            <CardBig icon={ICON_KOKESHI} label="Gif saludo japonés"  onPress={() => go('GifSaludo')}    bg="#D7A146" />
+            <CardBig icon={ICON_PLAY}    label="Video introductorio" onPress={() => go('VideoIntro'   as any)} bg="#7A1E2B" />
+            <CardBig icon={ICON_QUIZ}    label="Quiz cultural"       onPress={() => go('QuizCultural' as any)} bg="#1F3A4A" />
+            <CardBig icon={ICON_KOKESHI} label="Gif saludo japonés"  onPress={() => go('GifSaludo'    as any)} bg="#D7A146" />
           </View>
 
           <View style={s.sectionSpacer} />
@@ -154,7 +154,6 @@ function CardSolid({
       style={({ pressed }) => [s.cardSolid, { backgroundColor: bg }, style, pressed && s.pressed]}
     >
       <ExpoImage source={icon} style={s.cardSolidIcon} contentFit="contain" />
-      {/* subir un poco el texto */}
       <Text style={s.cardSolidText}>{label}</Text>
     </Pressable>
   );
@@ -174,7 +173,6 @@ function CardBig({
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.cardBig, { backgroundColor: bg }, pressed && s.pressed]}>
       <ExpoImage source={icon} style={s.cardBigIcon} contentFit="contain" />
-      {/* subir un poco el texto */}
       <Text style={s.cardBigText}>{label}</Text>
     </Pressable>
   );
@@ -227,9 +225,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
-  // Ícono grande (84) y menos espacio abajo para subir el texto
   cardSolidIcon: { width: 84, height: 84, marginBottom: 4 },
-  // mover texto ligeramente hacia arriba
   cardSolidText: { color: '#fff', fontWeight: '800', fontSize: 12, textAlign: 'center', marginTop: -6 },
 
   // Actividades
@@ -247,9 +243,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     elevation: 3,
   },
-  // Ícono grande (72) y menos espacio abajo
   cardBigIcon: { width: 72, height: 72, marginBottom: 6 },
-  // subir un poco el texto
   cardBigText: { color: '#fff', fontWeight: '800', textAlign: 'center', marginTop: -4 },
 
   // Info box

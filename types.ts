@@ -1,8 +1,6 @@
-// src/types.ts
-export type N5SubtemaKey = 'origenes' | 'escritura' | 'cultura';
-
+// types.ts
 export type RootStackParamList = {
-  // Arranque / auth / home
+  // Core
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
@@ -13,13 +11,20 @@ export type RootStackParamList = {
   N5Bienvenida: undefined;
   EntradaActividadesN5: undefined;
   IntroJapones: undefined;
-  OrigenesDelIdioma: undefined;
-
-  // 👇 Subtema genérico con parámetro OBLIGATORIO
-  Subtema: { key: N5SubtemaKey };
-
-  // Otros
   TemaN5: { title?: string } | undefined;
+
+  // Pantallas separadas N5
+  OrigenesDelIdioma: undefined; // pantalla larga “maratón”
+  EscrituraN5: undefined;
+  CulturaN5: undefined;
+
+
+  // Actividades usadas en IntroJaponesScreen (regístralas en App.tsx si las usarás)
+  VideoIntro?: undefined;
+  QuizCultural?: undefined;
+  GifSaludo?: undefined;
+
+  // Ejercicios
   VowelExercises: undefined;
 };
 
