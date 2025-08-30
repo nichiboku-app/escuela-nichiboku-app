@@ -1,4 +1,5 @@
 // src/screens/N5/OrigenesSerie.tsx
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useMemo, useState } from 'react';
 import {
   Image,
@@ -10,6 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
 
 // ====== Paddings globales ======
@@ -18,15 +20,18 @@ const CARD_PAD    = 16;
 const CARD_RADIUS = 16;
 
 // ====== Dimensiones fijas solicitadas ======
-const FIXED_CARD_TARGET_W = 500; // ancho objetivo de las tarjetas con imagen
-const FIXED_IMG_TARGET_H  = 300; // alto objetivo de las imágenes
+const FIXED_CARD_TARGET_W = 350; // ancho objetivo de las tarjetas con imagen
+const FIXED_IMG_TARGET_H  = 250; // alto objetivo de las imágenes
 
-// ====== Imágenes ======
-const IMG_HERO     = require('../../../assets/images/origenes_hero.webp');
+// ====== Imágenes (quitamos IMG_HERO porque ahora es video) ======
 const IMG_KANJI    = require('../../../assets/images/origenes_kanji.webp');
 const IMG_HIRAGANA = require('../../../assets/images/origenes_hiragana.webp');
 const IMG_KATAKANA = require('../../../assets/images/origenes_katakana.webp');
 const IMG_MAP      = require('../../../assets/images/origenes_mapa.webp');
+
+// ====== YouTube ======
+const YT_URL = 'https://youtu.be/2bRN6Zr_XeU';
+const YT_EMBED = `https://www.youtube.com/embed/2bRN6Zr_XeU?autoplay=1&mute=0&controls=0&playsinline=1&rel=0&modestbranding=1`;
 
 /* =========================
    GLOSARIO (tooltips)
@@ -130,6 +135,15 @@ export default function OrigenesSerie() {
   const { width: screenW } = useWindowDimensions();
   const cardW = Math.min(FIXED_CARD_TARGET_W, screenW - CONTENT_PAD * 1);
 
+  // Mostrar/ocultar el reproductor según foco (evita que siga sonando al salir)
+  const [showPlayer, setShowPlayer] = useState(true);
+  useFocusEffect(
+    React.useCallback(() => {
+      setShowPlayer(true);
+      return () => setShowPlayer(false);
+    }, [])
+  );
+
   const Term = ({ k, children }: { k: keyof typeof GLOSSARY; children: React.ReactNode }) => (
     <Text
       onPress={(e) => {
@@ -222,8 +236,22 @@ export default function OrigenesSerie() {
 
         {/* HERO + intro */}
         <View style={s.card}>
-          <Image source={IMG_HERO} style={s.heroImg} />
-          <Text style={s.h1}>Orígenes del idioma japonés — edición “maratón de serie”</Text>
+          {/* === YouTube en el espacio del HERO (misma altura/ancho que la imagen) === */}
+          {showPlayer ? (
+            <WebView
+              source={{ uri: YT_EMBED }}
+              style={s.heroImg}
+              javaScriptEnabled
+              allowsInlineMediaPlayback
+              mediaPlaybackRequiresUserAction={false} // Android: permitir autoplay con sonido
+              automaticallyAdjustContentInsets={false}
+              scrollEnabled={false}
+            />
+          ) : (
+            <View style={[s.heroImg, { backgroundColor: '#000' }]} />
+          )}
+
+          <Text style={s.h1}>Orígenes del idioma japonés</Text>
 
           <Text style={s.pJ}>
             Imagina abrir <Term k="Japón">Japón</Term> como si fuera el primer capítulo de una saga 🌏. Antes de los
@@ -299,7 +327,7 @@ export default function OrigenesSerie() {
           </Text>
         </View>
 
-        {/* Sistemas de escritura – tarjetas 450×400 */}
+        {/* Sistemas de escritura – tarjetas */}
         <View style={s.grid3}>
           <View style={[s.card, { width: cardW, alignSelf: 'center' }]}>
             <Text style={s.h3}>漢字 Kanji</Text>
@@ -320,7 +348,7 @@ export default function OrigenesSerie() {
           </View>
         </View>
 
-        {/* Mapa — AHORA TAMBIÉN 450×400 */}
+        {/* Mapa */}
         <View style={[s.card, { width: cardW, alignSelf: 'center' }]}>
           <Text style={s.h2}>Mapa de rutas culturales 🗺️</Text>
           <Text style={s.pJ}>
@@ -330,7 +358,7 @@ export default function OrigenesSerie() {
             source={IMG_MAP}
             forcedWidth={cardW}
             forcedHeight={FIXED_IMG_TARGET_H}
-             bleed 
+            bleed
           />
         </View>
 
@@ -463,12 +491,13 @@ const s = StyleSheet.create({
 
   grid3: { gap: 15 },
 
+  // Mantiene el espacio exacto del antiguo IMG_HERO
   heroImg: {
     width: '100%',
     height: 190,
     borderRadius: 14,
-    resizeMode: 'cover',
     marginBottom: 8,
+    overflow: 'hidden',
   },
 
   bold: { fontWeight: '800', color: '#111827' },

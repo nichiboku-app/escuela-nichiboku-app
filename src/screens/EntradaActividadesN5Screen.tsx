@@ -16,7 +16,7 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
-import type { RootStackParamList as AppRoutes } from '../../types'; // 👈 usa tu tipo global
+import type { RootStackParamList as AppRoutes } from '../../types';
 import { rememberLocation } from '../services/progress';
 
 // ===== ASSETS =====
@@ -34,11 +34,11 @@ const ICON_KOKESHI  = require('../../assets/icons/intro/icon_kokeshi.webp');
 const ICON_BOOK     = require('../../assets/icons/intro/icon_book_info.webp');
 
 // ===== NAV TYPES =====
-// Extiende tu RootStackParamList con las rutas de actividades usadas aquí
 type LocalNavParams = AppRoutes & {
   VideoIntro?: undefined;
   QuizCultural?: undefined;
   GifSaludo?: undefined;
+  SiguienteBloqueTemario?: undefined; // 👈 nueva ruta
 };
 type Nav = NativeStackNavigationProp<LocalNavParams>;
 
@@ -83,7 +83,7 @@ export default function IntroJaponesScreen() {
 
           <View style={s.row}>
             <CardSolid
-              bg="#DCDCE6"
+              bg="#8E443A"// color actual que pegaste
               icon={ICON_SCROLL}
               label="Orígenes del idioma"
               onPress={() => go('OrigenesDelIdioma')}
@@ -97,7 +97,7 @@ export default function IntroJaponesScreen() {
               style={{ width: CARD_W }}
             />
             <CardSolid
-              bg="#EF6C73"
+              bg="#AF7B85"
               icon={ICON_GEISHA}
               label="Cultura básica"
               onPress={() => go('CulturaN5')}
@@ -126,6 +126,15 @@ export default function IntroJaponesScreen() {
               hasta N1, actividades interactivas y una comunidad apasionada.
             </Text>
           </View>
+
+          {/* ===== BOTÓN: SIGUIENTE BLOQUE DEL TEMARIO ===== */}
+          <Pressable
+            onPress={() => go('SiguienteBloqueTemario')}
+            style={({ pressed }) => [s.nextBtn, pressed && s.pressed]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={s.nextBtnText}>Siguiente bloque del temario ➜</Text>
+          </Pressable>
 
           <View style={{ height: 32 }} />
         </ImageBackground>
@@ -212,7 +221,7 @@ const s = StyleSheet.create({
 
   row: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
 
-  // Subtemas sólidos
+  // Subtemas sólidos (marco negro grueso + texto blanco)
   cardSolid: {
     aspectRatio: 1 / 1.15,
     borderRadius: 18,
@@ -224,11 +233,19 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+    borderWidth: 3,
+    borderColor: '#000',
   },
   cardSolidIcon: { width: 84, height: 84, marginBottom: 4 },
-  cardSolidText: { color: '#fff', fontWeight: '800', fontSize: 12, textAlign: 'center', marginTop: -6 },
+  cardSolidText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: -6,
+  },
 
-  // Actividades
+  // Actividades (marco negro grueso; texto sigue blanco)
   cardBig: {
     flexGrow: 1,
     flexBasis: '30%',
@@ -242,6 +259,8 @@ const s = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
     elevation: 3,
+    borderWidth: 3,
+    borderColor: '#000',
   },
   cardBigIcon: { width: 72, height: 72, marginBottom: 6 },
   cardBigText: { color: '#fff', fontWeight: '800', textAlign: 'center', marginTop: -4 },
@@ -259,6 +278,22 @@ const s = StyleSheet.create({
   },
   infoIcon: { width: 32, height: 32 },
   infoText: { flex: 1, color: '#3b2b1b', fontWeight: '600' },
+
+  // Botón “Siguiente bloque del temario”
+  nextBtn: {
+    marginTop: 20,
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#000',
+  },
+  nextBtnText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 16,
+  },
 
   pressed: { transform: [{ scale: 0.98 }], opacity: 0.92 },
 });

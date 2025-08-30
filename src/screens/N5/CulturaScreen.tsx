@@ -1,6 +1,7 @@
 // src/screens/N5/CulturaScreen.tsx
 import React, { useMemo, useState } from 'react';
 import {
+  Image, // 👈 IMPORTANTE
   Pressable,
   ScrollView,
   StatusBar,
@@ -10,9 +11,8 @@ import {
 } from 'react-native';
 import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
 
-/** Si ya tienes una imagen hero para cultura, ponla aquí y cambia HAS_IMAGE a true */
-// const IMG_CULTURA = require('../../../assets/images/cultura_hero.webp');
-const HAS_IMAGE = false;
+const IMG_CULTURA = require('../../../assets/images/odori.webp');
+const HAS_IMAGE = true;
 
 /* ============ GLOSARIO (términos tocables) ============ */
 const GLOSSARY: Record<string, string> = {
@@ -150,13 +150,18 @@ export default function CulturaScreen() {
         {/* HERO */}
         <View style={s.card}>
           {HAS_IMAGE ? (
-            // <Image source={IMG_CULTURA} style={s.hero} />
-            <View />
+            <Image source={IMG_CULTURA} style={s.hero} />
           ) : (
-            <View style={[s.hero, { backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' }]}>
+            <View
+              style={[
+                s.hero,
+                { backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' },
+              ]}
+            >
               <Text style={{ color: '#111827', fontWeight: '800' }}>CULTURA BÁSICA (hero)</Text>
             </View>
           )}
+
           <Text style={s.h1}>Cultura básica: la guía “vivir y convivir” 🇯🇵</Text>
           <Text style={s.pJ}>
             Japón valora el <Text style={s.bold}>respeto silencioso</Text>, el <Text style={s.bold}>orden</Text> y la <Text style={s.bold}>consideración por los demás</Text>.

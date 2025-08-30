@@ -20,14 +20,22 @@ import { doc, onSnapshot } from "firebase/firestore";
 import AvatarWithFrame from "../components/AvatarWithFrame";
 import { auth, db } from "../config/firebaseConfig";
 import { getAvatarUri } from "../services/uploadAvatar";
-import { openDrawerDeep } from "../utils/nav"; // ⬅️ NUEVO
+import { openDrawerDeep } from "../utils/nav";
+
+// ⬇️ Intro video (nuevo)
+import IntroVideoModal from "../components/IntroVideoModal";
+import {
+  getIntroVideoUrl,
+  markIntroVideoSeen,
+  wasIntroVideoSeen,
+} from "../services/introVideo";
 
 const { width } = Dimensions.get("window");
 
 // Este tipo aquí ya no representa el Root real; lo mantenemos para autocompletado básico.
 type RootStackParamList = {
   Home: undefined;
-  ProgresoN5: undefined;           // ⚠️ No existe en tu árbol actual; lo redirigimos a ActividadesN5
+  ProgresoN5: undefined;
   Notas: undefined;
   Calendario: undefined;
   BienvenidaCursoN5: undefined;
@@ -35,8 +43,9 @@ type RootStackParamList = {
   CursoN4: undefined;
   CursoN3: undefined;
   Perfil: undefined;
-  Notificaciones: undefined;       // ⚠️ Drawer no la tiene; ajusta cuando exista
-  Chat: undefined;                 // ⚠️ Drawer no la tiene; ajusta cuando exista
+  Notificaciones: undefined;
+  Chat: undefined;
+  ActividadesN5?: undefined;
 };
 
 type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
@@ -45,6 +54,10 @@ export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
   const [ready, setReady] = useState(false);
   const [userDoc, setUserDoc] = useState<any>(null);
+
+  // ⬇️ Estado del video de introducción
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
     async function preloadImages() {
@@ -82,6 +95,26 @@ export default function HomeScreen(): React.JSX.Element {
     preloadImages();
   }, []);
 
+  // ⬇️ Cargar y mostrar video de introducción si corresponde
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const seen = await wasIntroVideoSeen();
+        if (seen) return;
+        const url = await getIntroVideoUrl();
+        if (!alive) return;
+        setVideoUrl(url);
+        setShowIntro(true);
+      } catch (e) {
+        console.warn("No se pudo cargar el video de introducción", e);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   // Suscripción al doc del usuario (colección 'Usuarios')
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -105,8 +138,8 @@ export default function HomeScreen(): React.JSX.Element {
     params?: Record<string, any>
   ) => {
     (navigation as any).navigate(
-      "Main" as never,                   // Drawer.Screen que contiene el HomeStackNavigator
-      { screen, params } as never        // HomeStack.Screen de destino
+      "Main" as never, // Drawer.Screen que contiene el HomeStackNavigator
+      { screen, params } as never
     );
   };
 
@@ -122,19 +155,16 @@ export default function HomeScreen(): React.JSX.Element {
         break;
 
       case "ProgresoN5":
-        // ⚠️ No existe en tu navegación actual, lo redirigimos a ActividadesN5 (ajusta si quieres CursoN5)
         navigateToHomeStack("ActividadesN5");
         break;
 
       case "Perfil":
       case "Notificaciones":
       case "Chat":
-        // Estos están (o estarán) a nivel Drawer; usa el parent (Drawer) para ir directo
         (navigation as any).getParent?.()?.navigate(route as never);
         break;
 
       default:
-        // Intento local por si en el futuro agregas rutas al HomeStack con el mismo nombre
         (navigation as any).navigate(route as never);
         break;
     }
@@ -181,7 +211,11 @@ export default function HomeScreen(): React.JSX.Element {
 
             <Text style={styles.headerTitle}>Hola, {firstName}</Text>
 
-            <TouchableOpacity onPress={() => (navigation as any).getParent?.()?.navigate("Perfil" as never)}>
+            <TouchableOpacity
+              onPress={() =>
+                (navigation as any).getParent?.()?.navigate("Perfil" as never)
+              }
+            >
               <AvatarWithFrame size={80} uri={avatarUri} />
             </TouchableOpacity>
           </View>
@@ -215,7 +249,7 @@ export default function HomeScreen(): React.JSX.Element {
             </View>
             <TouchableOpacity
               style={styles.progressBtn}
-              onPress={() => go("ProgresoN5")} // ⬅️ redirige a ActividadesN5 vía switch
+              onPress={() => go("ProgresoN5")}
               activeOpacity={0.9}
             >
               <Text style={styles.progressBtnText}>Ver progreso N5</Text>
@@ -264,14 +298,14 @@ export default function HomeScreen(): React.JSX.Element {
               title="Tanuki: Nivel N5"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n5_mapache.webp")}
-              onPress={() => go("BienvenidaCursoN5")} // ⬅️ ahora es navegación anidada al HomeStack
+              onPress={() => go("BienvenidaCursoN5")}
             />
             <CourseCard
               color="#b2453c"
               title="Kitsune: Nivel N4"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n4_zorro.webp")}
-              onPress={() => go("CursoN4")} // ⚠️ aún no está en Drawer/HomeStack; añade cuando exista
+              onPress={() => go("CursoN4")}
             />
             <CourseWide
               from="#f8b7a9"
@@ -279,7 +313,7 @@ export default function HomeScreen(): React.JSX.Element {
               title="Ryū: Nivel N3"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n3_leon.webp")}
-              onPress={() => go("CursoN3")} // ⚠️ igual que arriba
+              onPress={() => go("CursoN3")}
             />
           </View>
 
@@ -290,7 +324,7 @@ export default function HomeScreen(): React.JSX.Element {
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
             <TouchableOpacity
-              onPress={() => go("Notificaciones")} // ⚠️ agrega esta pantalla al Drawer cuando la crees
+              onPress={() => go("Notificaciones")}
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -310,7 +344,7 @@ export default function HomeScreen(): React.JSX.Element {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => go("Chat")} // ⚠️ agrega al Drawer en cuanto lo tengas
+              onPress={() => go("Chat")}
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -322,6 +356,17 @@ export default function HomeScreen(): React.JSX.Element {
           </View>
         </View>
       </SafeAreaView>
+
+      {/* ===== Modal de video de introducción ===== */}
+      <IntroVideoModal
+        visible={showIntro}
+        sourceUrl={videoUrl}
+        onClose={() => setShowIntro(false)}
+        onDontShowAgain={async () => {
+          await markIntroVideoSeen();
+          setShowIntro(false);
+        }}
+      />
     </View>
   );
 }
@@ -411,13 +456,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-// 🔴 Antes
-// hamburger: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-// hamburgerIcon: { width: 80, height: 80, resizeMode: "contain" },
 
-// 🟢 Después
-hamburger: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
-hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
+  // Botón de menú
+  hamburger: {
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
 
   headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800" },
 
@@ -430,7 +477,14 @@ hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
     overflow: "hidden",
     position: "relative",
   },
-  cloudDecor: { position: "absolute", right: 14, top: 10, width: 90, height: 60, opacity: 1 },
+  cloudDecor: {
+    position: "absolute",
+    right: 14,
+    top: 10,
+    width: 90,
+    height: 60,
+    opacity: 1,
+  },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   levelCircle: {
     width: 64,

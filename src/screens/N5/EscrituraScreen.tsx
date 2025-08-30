@@ -1,4 +1,5 @@
 // src/screens/N5/EscrituraScreen.tsx
+import * as Speech from 'expo-speech';
 import React, { useMemo, useState } from 'react';
 import {
   Image,
@@ -229,14 +230,29 @@ const KANJI_EXAMPLES: KanjiItem[] = [
 export default function EscrituraScreen() {
   const { tip, show, hide } = useTooltip();
 
-  // Mostrar SIEMPRE tooltip; si falta romaji, da mensaje por defecto
+  // 🔊 Hablar una sílaba (kana) con voz japonesa
+  const speakKana = (kana: string) => {
+    if (!kana?.trim()) return;
+    try {
+      // detener cualquier reproducción anterior para evitar solapamientos
+      Speech.stop();
+      Speech.speak(kana, {
+        language: 'ja-JP',
+        pitch: 1.0,
+        rate: 0.9,
+      });
+    } catch {}
+  };
+
+  // Mostrar tooltip + reproducir audio
   const pronounce = (kana: string, x: number, y: number) => {
     const clean = (kana || '').trim();
     if (!clean) return;
+    // 1) audio
+    speakKana(clean);
+    // 2) tooltip con romaji
     const r = ROMAJI[clean];
-    const text = r
-      ? `Se pronuncia: ${r}`
-      : 'Aún no tengo la transcripción exacta 🙈 (próximamente).';
+    const text = r ? `Se pronuncia: ${r}` : 'Aún no tengo la transcripción exacta 🙈 (próximamente).';
     show(clean, text, x, y);
   };
 
@@ -252,7 +268,7 @@ export default function EscrituraScreen() {
     </Text>
   );
 
-  // --- Quiz ---
+  // --- Quiz (identifica sistema) ---
   type QuizItem = { c: string; correct: 'Hiragana'|'Katakana'|'Kanji'; why: string };
   const questions: QuizItem[] = useMemo(
     () => [
@@ -278,7 +294,7 @@ export default function EscrituraScreen() {
         <View style={s.notice}>
           <Text style={s.noticeTitle}>💡 Tip interactivo</Text>
           <Text style={s.noticeText}>
-            Toca las <Text style={s.boldWhite}>palabras en negro</Text> o cualquier <Text style={s.boldWhite}>cuadro de las tablas</Text> para ver su pronunciación/definición en un globo rojo.
+            Toca las <Text style={s.boldWhite}>palabras en negro</Text> o cualquier <Text style={s.boldWhite}>cuadro de las tablas</Text> para escuchar la pronunciación y ver un globo rojo con la lectura.
           </Text>
         </View>
 
@@ -495,13 +511,12 @@ function YoonGrid({
 /* ===========================
    QUIZ: identifica el sistema
 =========================== */
-
 type ScriptKind = 'Hiragana' | 'Katakana' | 'Kanji';
 
 function IdentifyQuiz({
   questions,
 }: {
-  questions: { c: string; correct: ScriptKind }[];
+  questions: { c: string; correct: ScriptKind; why: string }[];
 }) {
   const { playCorrect, playWrong } = useFeedbackSounds();
   const [answers, setAnswers] = React.useState<number[]>(
@@ -519,10 +534,9 @@ function IdentifyQuiz({
       return next;
     });
 
-    // ✅ Llama a la función explícitamente (sin ternario statement)
     try {
       if (optIndex === okIndex) {
-        void playCorrect();   // `void` para ignorar la Promise
+        void playCorrect();
       } else {
         void playWrong();
       }
@@ -543,7 +557,7 @@ function IdentifyQuiz({
               return (
                 <Pressable
                   key={opt}
-                  onPressIn={() => press(qIdx, i)}        // 👈 responde al primer toque
+                  onPressIn={() => press(qIdx, i)}
                   android_ripple={{ color: '#e5e7eb' }}
                   style={[s.opt, chosen && (ok ? s.optOk : s.optNo)]}
                 >
@@ -552,13 +566,19 @@ function IdentifyQuiz({
               );
             })}
           </View>
+          {answers[qIdx] !== -1 && (
+            <Text style={[s.pJ, { marginTop: 6 }]}>
+              {(answers[qIdx] === (['Hiragana','Katakana','Kanji'] as ScriptKind[]).indexOf(q.correct))
+                ? '✅ ¡Correcto!'
+                : '❌ No exactamente.'}{' '}
+              {q.why}
+            </Text>
+          )}
         </View>
       ))}
     </View>
   );
 }
-
-
 
 /* =========================
    ESTILOS (tema claro)
@@ -659,7 +679,6 @@ const s = StyleSheet.create({
   kanjiMeaning: { color: '#374151' },
 
   // Quiz
-  bigChar: { fontSize: 42, textAlign: 'center', color: '#111827', marginBottom: 6 },
   opt: {
     borderWidth: 1,
     borderColor: '#cfd6df',

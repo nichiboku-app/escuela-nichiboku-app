@@ -15,13 +15,17 @@ import SplashScreen from './src/screens/SplashScreen';
 import N5Bienvenida from './src/screens/N5/Bienvenida';
 import CulturaScreen from './src/screens/N5/CulturaScreen';
 import EscrituraScreen from './src/screens/N5/EscrituraScreen';
+import GifSaludo from './src/screens/N5/GifSaludo';
 import TemaN5 from './src/screens/N5/TemaN5';
 import VowelExercisesScreen from './src/screens/VowelExercisesScreen';
 
-// 👉 IntroJapones (destino final tras el logro)
+// ✅ IMPORT CORRECTO DE LA NUEVA SCREEN
+import QuizCultural from './src/screens/N5/QuizCultural';
+
+// Destino final tras el logro
 import IntroJaponesScreen from './src/screens/IntroJaponesScreen';
 
-// 👉 NUEVO: pantallas registradas
+// Otras pantallas N5
 import OrigenesDelIdiomaScreen from './src/screens/N5/OrigenesDelIdiomaScreen';
 import SubtemaScreen from './src/screens/N5/SubtemaScreen';
 
@@ -87,14 +91,12 @@ export default function App() {
             options={{ headerShown: true, title: 'Cultura básica' }}
           />
 
-          {/* Mantén Subtema si aún lo usas en botones antiguos */}
           <Stack.Screen
             name="Subtema"
             component={SubtemaScreen}
             options={{ headerShown: false }}
           />
 
-          {/* Tema N5 con título dinámico */}
           <Stack.Screen
             name="TemaN5"
             component={TemaN5}
@@ -103,12 +105,25 @@ export default function App() {
               title: (route?.params as any)?.title ?? 'Hiragana',
             })}
           />
+          
+<Stack.Screen
+  name="GifSaludo"
+  component={GifSaludo}
+  options={{ headerShown: true, title: 'Saludos (GIF)' }}
+/>
 
           {/* Ejercicios */}
           <Stack.Screen
             name="VowelExercises"
             component={VowelExercisesScreen}
             options={{ headerShown: true, title: 'Ejercicios vocales' }}
+          />
+
+          {/* ✅ NUEVA RUTA REGISTRADA */}
+          <Stack.Screen
+            name="QuizCultural"
+            component={QuizCultural}
+            options={{ headerShown: true, title: 'Quiz cultural' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

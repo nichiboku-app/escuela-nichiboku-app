@@ -14,15 +14,14 @@ export type RootStackParamList = {
   TemaN5: { title?: string } | undefined;
 
   // Pantallas separadas N5
-  OrigenesDelIdioma: undefined; // pantalla larga “maratón”
+  OrigenesDelIdioma: undefined;
   EscrituraN5: undefined;
   CulturaN5: undefined;
 
-
-  // Actividades usadas en IntroJaponesScreen (regístralas en App.tsx si las usarás)
-  VideoIntro?: undefined;
-  QuizCultural?: undefined;
-  GifSaludo?: undefined;
+  // Actividades
+  VideoIntro: undefined;
+  QuizCultural: undefined;
+  GifSaludo: undefined;     // ⬅️ asegúrate que no esté “?” y coincida con App.tsx
 
   // Ejercicios
   VowelExercises: undefined;
