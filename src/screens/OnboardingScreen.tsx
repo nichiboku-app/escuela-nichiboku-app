@@ -135,15 +135,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   button: {
-    backgroundColor: '#b71c1c',
-    paddingHorizontal: 40,
+backgroundColor: '#1a0000',
     paddingVertical: 12,
-    borderRadius: 25,
-    marginBottom: 10,
+    paddingHorizontal: 50,
+    borderRadius: 30,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: '#ffd700'
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#fff', fontSize: 16
   },
   link: {
     color: '#b71c1c',

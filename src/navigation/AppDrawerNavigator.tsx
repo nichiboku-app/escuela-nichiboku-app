@@ -4,13 +4,13 @@ import {
   type DrawerContentComponentProps,
   type DrawerNavigationOptions,
 } from '@react-navigation/drawer';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { Image, Pressable } from 'react-native';
 
+// Drawer UI
 import CustomDrawer from '../ui/CustomDrawer';
 
+// Pantallas del Drawer (en src/screens)
 import ContactoScreen from '../screens/ContactoScreen';
 import EventosScreen from '../screens/EventosScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -21,14 +21,16 @@ import PerfilScreen from '../screens/PerfilScreen';
 import PoliticaScreen from '../screens/PoliticaScreen';
 import PreguntasScreen from '../screens/PreguntasScreen';
 
+// N5 que abrimos dentro del HomeStack
 import ActividadesN5Screen from '../screens/ActividadesN5Screen';
 import BienvenidaCursoN5 from '../screens/BienvenidaCursoN5_1Screen';
 import CalendarioScreen from '../screens/CalendarioScreen';
 import CursoN5Screen from '../screens/CursoN5Screen';
 import NotasScreen from '../screens/NotasScreen';
 
+// ===== Tipos =====
 export type DrawerParamList = {
-  Main: undefined;
+  Main: undefined;       // contiene el HomeStack
   Perfil: undefined;
   Pagos: undefined;
   Noticias: undefined;
@@ -40,7 +42,7 @@ export type DrawerParamList = {
 };
 
 export type HomeStackParamList = {
-  HomeMain: undefined;
+  HomeMain: undefined;   // pantalla raíz del stack interno
   ActividadesN5: undefined;
   CursoN5: undefined;
   Calendario: undefined;
@@ -53,10 +55,7 @@ const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 
 function HomeStackNavigator() {
   return (
-    <HomeStack.Navigator
-      initialRouteName="HomeMain"
-      screenOptions={{ headerShown: false }} // ⬅️ el stack NO muestra header
-    >
+    <HomeStack.Navigator initialRouteName="HomeMain" screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="ActividadesN5" component={ActividadesN5Screen} />
       <HomeStack.Screen name="CursoN5" component={CursoN5Screen} />
@@ -67,63 +66,33 @@ function HomeStackNavigator() {
   );
 }
 
-// ⭐️ Hamburguesa grande personalizada que abre el Drawer
-function CustomHamburger() {
-  const navigation = useNavigation();
-  return (
-    <Pressable
-      onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-      style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-      hitSlop={12}
-    >
-      <Image
-        source={require('../../assets/icons/hamburger.webp')}
-        // Ajusta tamaño aquí
-        style={{ width: 48, height: 48, resizeMode: 'contain' }}
-      />
-    </Pressable>
-  );
-}
-
 const screenOptions: DrawerNavigationOptions = {
-  // headerShown: false,  ⬅️ IMPORTANTE: lo controlaremos por pantalla
   drawerType: 'slide',
   drawerPosition: 'left',
   swipeEnabled: true,
   swipeEdgeWidth: 80,
   overlayColor: 'rgba(0,0,0,0.25)',
-  drawerStyle: {
-    width: 320,
-    backgroundColor: 'transparent',
-  },
+  drawerStyle: { width: 320, backgroundColor: 'transparent' },
 };
 
 export default function AppDrawerNavigator() {
   return (
     <Drawer.Navigator
-      // @ts-expect-error - id opcional; lo usamos con openDrawerDeep
+      // @ts-expect-error id opcional para helpers
       id="AppDrawer"
       initialRouteName="Main"
       screenOptions={screenOptions}
       sceneContainerStyle={{ backgroundColor: 'transparent' }}
       drawerContent={(props: DrawerContentComponentProps) => <CustomDrawer {...props} />}
     >
-      {/* ⬇️ SOLO para Main (HomeStack) mostramos header con hamburguesa grande */}
+      {/* Home stack DENTRO del Drawer. SIN header para evitar hamburguesa doble */}
       <Drawer.Screen
         name="Main"
         component={HomeStackNavigator}
-        options={{
-          drawerLabel: 'Inicio',
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,                  // header sin barra sólida
-          headerLeft: () => <CustomHamburger />,    // ← hamburguesa grande
-          headerRight: () => null,
-          headerStyle: { backgroundColor: 'transparent' },
-        }}
+        options={{ drawerLabel: 'Inicio', headerShown: false }}
       />
 
-      {/* El resto sin header (o personalízalos igual si quieres la hamburguesa visible ahí también) */}
+      {/* El resto de pantallas del Drawer */}
       <Drawer.Screen name="Perfil" component={PerfilScreen} options={{ headerShown: false }} />
       <Drawer.Screen name="Pagos" component={PagosScreen} options={{ headerShown: false }} />
       <Drawer.Screen name="Noticias" component={NoticiasScreen} options={{ headerShown: false }} />

@@ -8,7 +8,7 @@ module.exports = {
     extra: {
       firebase: {
      apiKey: "AIzaSyAbJi5h4-YnWZ5Nq0_QGf0W-IhLCdnKyHM",
-  authDomain: "escuelanichiboku.firebaseapp.com",
+  authDoMain: "escuelanichiboku.firebaseapp.com",
   projectId: "escuelanichiboku",
   storageBucket: "escuelanichiboku.firebasestorage.app",
   messagingSenderId: "134897542862",

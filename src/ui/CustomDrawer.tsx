@@ -100,7 +100,7 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
   const go = (route: string) => props.navigation.navigate(route as never);
 
   const goHome = () => {
-    props.navigation.navigate("HomeMain" as never);
+    props.navigation.navigate("Main" as never);
     props.navigation.closeDrawer();
   };
 

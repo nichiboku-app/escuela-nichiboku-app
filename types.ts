@@ -1,4 +1,3 @@
-// types.ts
 export type RootStackParamList = {
   // Core
   Splash: undefined;
@@ -19,12 +18,14 @@ export type RootStackParamList = {
   CulturaN5: undefined;
 
   // Actividades
-  VideoIntro: undefined;
   QuizCultural: undefined;
-  GifSaludo: undefined;     // ⬅️ asegúrate que no esté “?” y coincida con App.tsx
+  GifSaludo: undefined;
 
   // Ejercicios
   VowelExercises: undefined;
+
+  // ⬇️ SCREEN DEL REPRODUCTOR (nombre tal cual tu archivo)
+  VideoIntroModal: { videoId?: string } | undefined;
 };
 
 declare global {

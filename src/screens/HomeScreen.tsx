@@ -1,8 +1,10 @@
 // src/screens/HomeScreen.tsx
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Asset } from "expo-asset";
-import React, { useEffect, useState } from "react";
+import { Image as ExpoImage } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -22,7 +24,7 @@ import { auth, db } from "../config/firebaseConfig";
 import { getAvatarUri } from "../services/uploadAvatar";
 import { openDrawerDeep } from "../utils/nav";
 
-// ⬇️ Intro video (nuevo)
+// Intro video modal
 import IntroVideoModal from "../components/IntroVideoModal";
 import {
   getIntroVideoUrl,
@@ -32,7 +34,7 @@ import {
 
 const { width } = Dimensions.get("window");
 
-// Este tipo aquí ya no representa el Root real; lo mantenemos para autocompletado básico.
+// Tipos locales para navegación (autocompletado básico)
 type RootStackParamList = {
   Home: undefined;
   ProgresoN5: undefined;
@@ -52,10 +54,20 @@ type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
 
 export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
+
+  // 🔧 Oculta el header nativo del padre SOLO en Home
+  useFocusEffect(
+    useCallback(() => {
+      const parent = (navigation as any).getParent?.();
+      parent?.setOptions?.({ headerShown: false });
+      return () => parent?.setOptions?.({ headerShown: true });
+    }, [navigation])
+  );
+
   const [ready, setReady] = useState(false);
   const [userDoc, setUserDoc] = useState<any>(null);
 
-  // ⬇️ Estado del video de introducción
+  // Estado del video de introducción
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
 
@@ -70,6 +82,7 @@ export default function HomeScreen(): React.JSX.Element {
           require("../../assets/images/cursos/n4_zorro.webp"),
           require("../../assets/images/cursos/n3_leon.webp"),
           require("../../assets/images/cursos/n5_mapache_avance.webp"),
+          require("../../assets/images/cursos/rueda2.webp"), // aro bicolor
 
           require("../../assets/icons/hamburger.webp"),
           require("../../assets/images/avatar_formal.webp"),
@@ -95,7 +108,7 @@ export default function HomeScreen(): React.JSX.Element {
     preloadImages();
   }, []);
 
-  // ⬇️ Cargar y mostrar video de introducción si corresponde
+  // Mostrar video de introducción si aplica
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -115,7 +128,7 @@ export default function HomeScreen(): React.JSX.Element {
     };
   }, []);
 
-  // Suscripción al doc del usuario (colección 'Usuarios')
+  // Suscripción al doc del usuario
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
@@ -124,26 +137,19 @@ export default function HomeScreen(): React.JSX.Element {
     });
   }, []);
 
-  // ⬇️ Abre el Drawer de forma robusta (Opción B + helper)
   const openDrawer = () => {
     const ok = openDrawerDeep(navigation as any);
-    if (__DEV__ && !ok) {
-      console.warn("No se encontró Drawer por encima de HomeScreen.");
-    }
+    if (__DEV__ && !ok) console.warn("No se encontró Drawer por encima de HomeScreen.");
   };
 
-  // ⬇️ Helper para navegar SIEMPRE al HomeStack dentro del Drawer (Main)
+  // Navegación hacia el HomeStack dentro del Drawer (Main)
   const navigateToHomeStack = (
     screen: "BienvenidaCursoN5" | "Calendario" | "Notas" | "CursoN5" | "ActividadesN5",
     params?: Record<string, any>
   ) => {
-    (navigation as any).navigate(
-      "Main" as never, // Drawer.Screen que contiene el HomeStackNavigator
-      { screen, params } as never
-    );
+    (navigation as any).navigate("Main" as never, { screen, params } as never);
   };
 
-  // ⬇️ Router unificado para tus botones actuales
   const go = (route: keyof RootStackParamList) => {
     switch (route) {
       case "BienvenidaCursoN5":
@@ -153,17 +159,14 @@ export default function HomeScreen(): React.JSX.Element {
       case "ActividadesN5":
         navigateToHomeStack(route);
         break;
-
       case "ProgresoN5":
         navigateToHomeStack("ActividadesN5");
         break;
-
       case "Perfil":
       case "Notificaciones":
       case "Chat":
         (navigation as any).getParent?.()?.navigate(route as never);
         break;
-
       default:
         (navigation as any).navigate(route as never);
         break;
@@ -173,7 +176,7 @@ export default function HomeScreen(): React.JSX.Element {
   if (!ready) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color="#b6111b" />
+        <ActivityIndicator size="large" color="#1a1818ff" />
       </View>
     );
   }
@@ -192,30 +195,16 @@ export default function HomeScreen(): React.JSX.Element {
       />
 
       <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* Header propio */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.hamburger}
-              activeOpacity={0.7}
-              onPress={openDrawer}
-            >
-              <Image
-                source={require("../../assets/icons/hamburger.webp")}
-                style={styles.hamburgerIcon}
-              />
+            <TouchableOpacity style={styles.hamburger} activeOpacity={0.7} onPress={openDrawer}>
+              <Image source={require("../../assets/icons/hamburger.webp")} style={styles.hamburgerIcon} />
             </TouchableOpacity>
 
             <Text style={styles.headerTitle}>Hola, {firstName}</Text>
 
-            <TouchableOpacity
-              onPress={() =>
-                (navigation as any).getParent?.()?.navigate("Perfil" as never)
-              }
-            >
+            <TouchableOpacity onPress={() => (navigation as any).getParent?.()?.navigate("Perfil" as never)}>
               <AvatarWithFrame size={80} uri={avatarUri} />
             </TouchableOpacity>
           </View>
@@ -229,9 +218,10 @@ export default function HomeScreen(): React.JSX.Element {
             />
             <View style={styles.progressRow}>
               <View style={styles.levelCircle}>
-                <Image
-                  source={require("../../assets/images/cursos/n5_mapache_avance.webp")}
+                <ExpoImage
+                  source={require("../../assets/images/cursos/rueda2.webp")}
                   style={styles.levelIcon}
+                  contentFit="contain"
                 />
               </View>
               <View style={styles.progressTextCol}>
@@ -247,11 +237,7 @@ export default function HomeScreen(): React.JSX.Element {
                 </View>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.progressBtn}
-              onPress={() => go("ProgresoN5")}
-              activeOpacity={0.9}
-            >
+            <TouchableOpacity style={styles.progressBtn} onPress={() => go("ProgresoN5")} activeOpacity={0.9}>
               <Text style={styles.progressBtnText}>Ver progreso N5</Text>
             </TouchableOpacity>
           </View>
@@ -264,27 +250,13 @@ export default function HomeScreen(): React.JSX.Element {
               imageStyle={styles.panelBgImage}
             >
               <View style={styles.actionRow}>
-                <TouchableOpacity
-                  onPress={() => go("Notas")}
-                  style={styles.actionBtn}
-                  activeOpacity={0.9}
-                >
-                  <Image
-                    source={require("../../assets/images/Notas.webp")}
-                    style={styles.actionIcon}
-                  />
+                <TouchableOpacity onPress={() => go("Notas")} style={styles.actionBtn} activeOpacity={0.9}>
+                  <Image source={require("../../assets/images/Notas.webp")} style={styles.actionIcon} />
                   <Text style={styles.actionText}>Notas</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={() => go("Calendario")}
-                  style={styles.actionBtn}
-                  activeOpacity={0.9}
-                >
-                  <Image
-                    source={require("../../assets/images/Calendario.webp")}
-                    style={styles.actionIcon}
-                  />
+                <TouchableOpacity onPress={() => go("Calendario")} style={styles.actionBtn} activeOpacity={0.9}>
+                  <Image source={require("../../assets/images/Calendario.webp")} style={styles.actionIcon} />
                   <Text style={styles.actionText}>Calendario</Text>
                 </TouchableOpacity>
               </View>
@@ -294,22 +266,24 @@ export default function HomeScreen(): React.JSX.Element {
           {/* Tarjetas de cursos */}
           <View style={styles.cardsGrid}>
             <CourseCard
-              color="#7a0e14"
+              from="#6b0213"
+              to="#b46b72"
               title="Tanuki: Nivel N5"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n5_mapache.webp")}
               onPress={() => go("BienvenidaCursoN5")}
             />
             <CourseCard
-              color="#b2453c"
+              from="#4e000e"
+              to="#b46b72"
               title="Kitsune: Nivel N4"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n4_zorro.webp")}
               onPress={() => go("CursoN4")}
             />
             <CourseWide
-              from="#f8b7a9"
-              to="#c3192e"
+              from="#914961"
+              to="#b46b72"
               title="Ryū: Nivel N3"
               minutes="50 minutos"
               image={require("../../assets/images/cursos/n3_leon.webp")}
@@ -323,41 +297,20 @@ export default function HomeScreen(): React.JSX.Element {
         {/* Pill fijo */}
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
-            <TouchableOpacity
-              onPress={() => go("Notificaciones")}
-              style={styles.bottomItem}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={require("../../assets/icons/bell.webp")}
-                style={styles.bottomIcon}
-              />
+            <TouchableOpacity onPress={() => go("Notificaciones")} style={styles.bottomItem} activeOpacity={0.8}>
+              <Image source={require("../../assets/icons/bell.webp")} style={styles.bottomIcon} />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => go("Notas")}
-              style={styles.bottomItem}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={require("../../assets/icons/heart.webp")}
-                style={styles.bottomIcon}
-              />
+            <TouchableOpacity onPress={() => go("Notas")} style={styles.bottomItem} activeOpacity={0.8}>
+              <Image source={require("../../assets/icons/heart.webp")} style={styles.bottomIcon} />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => go("Chat")}
-              style={styles.bottomItem}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={require("../../assets/icons/ia.webp")}
-                style={styles.bottomIcon}
-              />
+            <TouchableOpacity onPress={() => go("Chat")} style={styles.bottomItem} activeOpacity={0.8}>
+              <Image source={require("../../assets/icons/ia.webp")} style={styles.bottomIcon} />
             </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
 
-      {/* ===== Modal de video de introducción ===== */}
+      {/* Modal de video de introducción */}
       <IntroVideoModal
         visible={showIntro}
         sourceUrl={videoUrl}
@@ -372,34 +325,30 @@ export default function HomeScreen(): React.JSX.Element {
 }
 
 function CourseCard({
-  color,
+  from,
+  to,
   title,
   minutes,
   image,
   onPress,
 }: {
-  color: string;
+  from: string;
+  to: string;
   title: string;
   minutes: string;
   image: any;
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
-      style={[styles.card, { backgroundColor: color }]}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
+      <LinearGradient colors={[from, to]} style={StyleSheet.absoluteFill} />
       <View style={styles.cardArt}>
         <Image source={image} style={styles.cardIcon} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.cardTitle}>{title}</Text>
         <View style={styles.timeRow}>
-          <Image
-            source={require("../../assets/icons/clock.webp")}
-            style={styles.timeIcon}
-          />
+          <Image source={require("../../assets/icons/clock.webp")} style={styles.timeIcon} />
           <Text style={styles.timeText}>{minutes}</Text>
         </View>
       </View>
@@ -424,20 +373,13 @@ function CourseWide({
 }) {
   return (
     <TouchableOpacity style={styles.wide} onPress={onPress} activeOpacity={0.9}>
-      <ImageBackground
-        source={require("../../assets/images/gradient_red.webp")}
-        style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
-        imageStyle={{ borderRadius: 22 }}
-      />
+      <LinearGradient colors={[from, to]} style={StyleSheet.absoluteFill} />
       <View style={styles.wideRow}>
         <Image source={image} style={styles.wideIcon} />
         <View style={{ flex: 1 }}>
           <Text style={styles.wideTitle}>{title}</Text>
           <View style={styles.timeRow}>
-            <Image
-              source={require("../../assets/icons/clock.webp")}
-              style={styles.timeIcon}
-            />
+            <Image source={require("../../assets/icons/clock.webp")} style={styles.timeIcon} />
             <Text style={styles.timeText}>{minutes}</Text>
           </View>
         </View>
@@ -456,20 +398,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-
-  // Botón de menú
-  hamburger: {
-    width: 72,
-    height: 72,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  hamburger: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
   hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
-
   headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800" },
 
   progressCard: {
-    backgroundColor: "#b6111b",
+    backgroundColor: "#6b0213",
     marginHorizontal: 16,
     marginTop: 12,
     borderRadius: 18,
@@ -477,24 +411,22 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
-  cloudDecor: {
-    position: "absolute",
-    right: 14,
-    top: 10,
-    width: 90,
-    height: 60,
-    opacity: 1,
-  },
+  cloudDecor: { position: "absolute", right: 14, top: 10, width: 90, height: 60, opacity: 1 },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+
   levelCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#f5e9e9",
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
-  levelIcon: { width: 120, height: 120, resizeMode: "contain" },
+  levelIcon: {
+    width: 64,
+    height: 64,
+  },
+
   progressTextCol: { flex: 1, paddingRight: 60 },
   progressTitle: { color: "#fff", fontSize: 16, fontWeight: "800", lineHeight: 24 },
   dotsRow: { flexDirection: "row", gap: 6, marginTop: 6 },
@@ -502,7 +434,7 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: "#fff" },
   progressBtn: {
     backgroundColor: "#f7f7f7",
-    alignSelf: "flex-start",
+    alignSelf: "center",
     marginTop: 12,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -510,16 +442,10 @@ const styles = StyleSheet.create({
   },
   progressBtnText: { fontWeight: "800" },
 
-  // Panel Notas / Calendario
   panelWrap: { marginTop: 12, paddingHorizontal: 16 },
   panelBg: { height: 118, justifyContent: "center", paddingHorizontal: 18 },
   panelBgImage: { resizeMode: "stretch", borderRadius: 14 },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    columnGap: 14,
-  },
+  actionRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 14 },
   actionBtn: {
     width: "42%",
     height: 44,
@@ -539,7 +465,6 @@ const styles = StyleSheet.create({
   actionIcon: { width: 26, height: 26, resizeMode: "contain" },
   actionText: { fontWeight: "800", fontSize: 16, color: "#5a0d12" },
 
-  // Cursos
   cardsGrid: {
     marginTop: 16,
     paddingHorizontal: 16,
@@ -548,9 +473,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
   },
-  card: { width: (width - 16 * 2 - 12) / 2, borderRadius: 18, padding: 12 },
+  card: {
+    width: (width - 16 * 2 - 12) / 2,
+    borderRadius: 18,
+    padding: 12,
+    overflow: "hidden",
+  },
   cardArt: {
-    backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 14,
     marginBottom: 10,
     alignItems: "center",
@@ -563,12 +492,11 @@ const styles = StyleSheet.create({
   timeIcon: { width: 14, height: 14, resizeMode: "contain", tintColor: "#fff" },
   timeText: { color: "#fff" },
 
-  wide: { width: "100%", borderRadius: 22, padding: 14 },
+  wide: { width: "100%", borderRadius: 22, padding: 14, overflow: "hidden" },
   wideRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   wideIcon: { width: 105, height: 105, resizeMode: "contain" },
   wideTitle: { color: "#fff", fontWeight: "800", fontSize: 16, marginBottom: 6 },
 
-  // Pill fijo
   bottomBarFixed: {
     position: "absolute",
     left: 0,

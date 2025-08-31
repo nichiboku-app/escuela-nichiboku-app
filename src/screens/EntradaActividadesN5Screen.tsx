@@ -34,18 +34,12 @@ const ICON_KOKESHI  = require('../../assets/icons/intro/icon_kokeshi.webp');
 const ICON_BOOK     = require('../../assets/icons/intro/icon_book_info.webp');
 
 // ===== NAV TYPES =====
-type LocalNavParams = AppRoutes & {
-  VideoIntro?: undefined;
-  QuizCultural?: undefined;
-  GifSaludo?: undefined;
-  SiguienteBloqueTemario?: undefined; // 👈 nueva ruta
-};
-type Nav = NativeStackNavigationProp<LocalNavParams>;
+type Nav = NativeStackNavigationProp<AppRoutes>;
 
 export default function IntroJaponesScreen() {
   const navigation = useNavigation<Nav>();
 
-  const go = <T extends keyof LocalNavParams>(route: T, params?: LocalNavParams[T]) => {
+  const go = <T extends keyof AppRoutes>(route: T, params?: AppRoutes[T]) => {
     rememberLocation('IntroJapones');
     (navigation as any).navigate(route as string, params as any);
   };
@@ -58,7 +52,8 @@ export default function IntroJaponesScreen() {
 
   return (
     <View style={s.root}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      {/* StatusBar NO translúcida para que no se vea nada detrás del header */}
+      <StatusBar translucent={false} backgroundColor="#6B0015" barStyle="light-content" />
 
       {/* HEADER: gradiente + nubes + pagoda */}
       <View style={s.header}>
@@ -83,21 +78,21 @@ export default function IntroJaponesScreen() {
 
           <View style={s.row}>
             <CardSolid
-              bg="#8E443A"// color actual que pegaste
+              bg="#780000"
               icon={ICON_SCROLL}
               label="Orígenes del idioma"
               onPress={() => go('OrigenesDelIdioma')}
               style={{ width: CARD_W }}
             />
             <CardSolid
-              bg="#9EB2A5"
+              bg="#C1121f"
               icon={ICON_BRUSH}
               label="Sistemas de escritura"
               onPress={() => go('EscrituraN5')}
               style={{ width: CARD_W }}
             />
             <CardSolid
-              bg="#AF7B85"
+              bg="#B7213F"
               icon={ICON_GEISHA}
               label="Cultura básica"
               onPress={() => go('CulturaN5')}
@@ -111,9 +106,24 @@ export default function IntroJaponesScreen() {
           <Text style={s.sectionTitle}>Actividades</Text>
 
           <View style={s.row}>
-            <CardBig icon={ICON_PLAY}    label="Video introductorio" onPress={() => go('VideoIntro'   as any)} bg="#7A1E2B" />
-            <CardBig icon={ICON_QUIZ}    label="Quiz cultural"       onPress={() => go('QuizCultural' as any)} bg="#1F3A4A" />
-            <CardBig icon={ICON_KOKESHI} label="Gif saludo japonés"  onPress={() => go('GifSaludo'    as any)} bg="#D7A146" />
+            <CardBig
+              icon={ICON_PLAY}
+              label="Video introductorio"
+              onPress={() => go('VideoIntroModal')}
+              bg="#6A2B09"
+            />
+            <CardBig
+              icon={ICON_QUIZ}
+              label="Quiz cultural"
+              onPress={() => go('QuizCultural')}
+              bg="#FCB861"
+            />
+            <CardBig
+              icon={ICON_KOKESHI}
+              label="Gif saludo japonés"
+              onPress={() => go('GifSaludo')}
+              bg="#8FB3E2"
+            />
           </View>
 
           <View style={s.sectionSpacer} />
@@ -129,7 +139,7 @@ export default function IntroJaponesScreen() {
 
           {/* ===== BOTÓN: SIGUIENTE BLOQUE DEL TEMARIO ===== */}
           <Pressable
-            onPress={() => go('SiguienteBloqueTemario')}
+            onPress={() => go('EntradaActividadesN5')}
             style={({ pressed }) => [s.nextBtn, pressed && s.pressed]}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -245,7 +255,7 @@ const s = StyleSheet.create({
     marginTop: -6,
   },
 
-  // Actividades (marco negro grueso; texto sigue blanco)
+  // Actividades (marco negro)
   cardBig: {
     flexGrow: 1,
     flexBasis: '30%',
