@@ -1,0 +1,24 @@
+{
+  "character": "え",
+  "viewBox": "0 0 100 100",
+  "strokes": [
+    {
+      "id": 1,
+      "path": "M20 28 H78",
+      "desc": "Línea horizontal superior",
+      "width": 5
+    },
+    {
+      "id": 2,
+      "path": "M32 44 C50 36,66 44,72 52",
+      "desc": "Curva media hacia la derecha",
+      "width": 5
+    },
+    {
+      "id": 3,
+      "path": "M24 64 H74",
+      "desc": "Línea horizontal inferior",
+      "width": 6
+    }
+  ]
+}

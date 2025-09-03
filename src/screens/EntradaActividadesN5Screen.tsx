@@ -139,12 +139,12 @@ export default function IntroJaponesScreen() {
 
           {/* ===== BOTÓN: SIGUIENTE BLOQUE DEL TEMARIO ===== */}
           <Pressable
-            onPress={() => go('EntradaActividadesN5')}
-            style={({ pressed }) => [s.nextBtn, pressed && s.pressed]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={s.nextBtnText}>Siguiente bloque del temario ➜</Text>
-          </Pressable>
+  onPress={() => go('Hiragana')}   // 👈 antes: 'EntradaActividadesN5'
+  style={({ pressed }) => [s.nextBtn, pressed && s.pressed]}
+  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+>
+  <Text style={s.nextBtnText}>Siguiente capítulo: Hiragana ➜</Text>
+</Pressable>
 
           <View style={{ height: 32 }} />
         </ImageBackground>

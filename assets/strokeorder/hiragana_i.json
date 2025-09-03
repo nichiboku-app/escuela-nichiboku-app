@@ -1,0 +1,18 @@
+{
+  "character": "い",
+  "viewBox": "0 0 100 100",
+  "strokes": [
+    {
+      "id": 1,
+      "path": "M38 20 C34 35,34 60,38 78",
+      "desc": "Trazado principal vertical curvo",
+      "width": 6
+    },
+    {
+      "id": 2,
+      "path": "M58 24 C54 40,54 60,58 78",
+      "desc": "Segundo trazo paralelo curvo",
+      "width": 6
+    }
+  ]
+}

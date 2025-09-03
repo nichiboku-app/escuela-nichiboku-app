@@ -1,0 +1,18 @@
+{
+  "character": "う",
+  "viewBox": "0 0 100 100",
+  "strokes": [
+    {
+      "id": 1,
+      "path": "M26 30 C50 16,72 24,74 34",
+      "desc": "Pequeña curva superior (como acento)",
+      "width": 5
+    },
+    {
+      "id": 2,
+      "path": "M34 44 C30 64,46 78,66 72 C74 70,78 62,70 56",
+      "desc": "Curva grande descendente con cierre",
+      "width": 6
+    }
+  ]
+}

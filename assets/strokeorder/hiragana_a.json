@@ -1,0 +1,24 @@
+{
+  "character": "あ",
+  "viewBox": "0 0 100 100",
+  "strokes": [
+    {
+      "id": 1,
+      "path": "M18 18 H72",
+      "desc": "Línea horizontal superior",
+      "width": 5
+    },
+    {
+      "id": 2,
+      "path": "M40 16 C30 26,28 38,40 48 C52 58,65 55,66 44 C67 32,55 24,40 30",
+      "desc": "Curva principal descendente (cuerpo)",
+      "width": 6
+    },
+    {
+      "id": 3,
+      "path": "M58 56 Q68 64,74 58",
+      "desc": "Gancho corto a la derecha",
+      "width": 5
+    }
+  ]
+}

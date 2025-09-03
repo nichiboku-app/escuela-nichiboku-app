@@ -1,0 +1,24 @@
+{
+  "character": "お",
+  "viewBox": "0 0 100 100",
+  "strokes": [
+    {
+      "id": 1,
+      "path": "M28 24 V70",
+      "desc": "Tallo vertical (ligero curvado)",
+      "width": 6
+    },
+    {
+      "id": 2,
+      "path": "M54 30 C40 36,36 54,50 62 C64 70,78 60,74 48 C72 40,64 34,54 36",
+      "desc": "Bucle/ovalo principal",
+      "width": 6
+    },
+    {
+      "id": 3,
+      "path": "M48 22 H76",
+      "desc": "Pequeña línea superior",
+      "width": 5
+    }
+  ]
+}

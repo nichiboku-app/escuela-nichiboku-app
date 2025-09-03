@@ -1,3 +1,4 @@
+// types.ts
 export type RootStackParamList = {
   // Core
   Splash: undefined;
@@ -10,6 +11,7 @@ export type RootStackParamList = {
   N5Bienvenida: undefined;
   EntradaActividadesN5: undefined;
   IntroJapones: undefined;
+  Hiragana: undefined;
   TemaN5: { title?: string } | undefined;
 
   // Pantallas separadas N5
@@ -17,15 +19,33 @@ export type RootStackParamList = {
   EscrituraN5: undefined;
   CulturaN5: undefined;
 
-  // Actividades
+  // Actividades intro
   QuizCultural: undefined;
   GifSaludo: undefined;
 
   // Ejercicios
   VowelExercises: undefined;
 
-  // ⬇️ SCREEN DEL REPRODUCTOR (nombre tal cual tu archivo)
+  // Reproductor
   VideoIntroModal: { videoId?: string } | undefined;
+
+  // === Nuevo: Hiragana Grupo A ===
+  TrazosGrupoA: undefined;
+  PronunciacionGrupoA: undefined;
+  EjemplosGrupoA: undefined;
+
+  // Actividades Grupo A
+  TarjetasGrupoA: undefined;
+  TrazoAnimadoGrupoA: undefined;
+  DictadoVisualGrupoA: undefined;
+
+  // === Nuevo: Hiragana Grupo K ===
+  TrazoGrupoK: undefined;
+  VocabularioGrupoK: undefined;
+
+  // Actividades Grupo K
+  MatchingGrupoK: undefined;
+  MemoriaGrupoK: undefined;
 };
 
 declare global {
