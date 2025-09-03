@@ -1,4 +1,3 @@
-// App.tsx
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -20,6 +19,7 @@ import EntradaActividadesN5Screen from './src/screens/EntradaActividadesN5Screen
 import IntroJaponesScreen from './src/screens/IntroJaponesScreen';
 import N5Bienvenida from './src/screens/N5/Bienvenida';
 import CulturaScreen from './src/screens/N5/CulturaScreen';
+import EjemplosGrupoA from './src/screens/N5/EjemplosGrupoA';
 import EscrituraScreen from './src/screens/N5/EscrituraScreen';
 import GifSaludo from './src/screens/N5/GifSaludo';
 import HiraganaScreen from './src/screens/N5/HiraganaScreen';
@@ -29,10 +29,12 @@ import SubtemaScreen from './src/screens/N5/SubtemaScreen';
 import TemaN5 from './src/screens/N5/TemaN5';
 import VowelExercisesScreen from './src/screens/VowelExercisesScreen';
 
+
 // Modal de video N5
 import VideoIntroModal from './src/screens/N5/VideoIntroModal';
 
-// ✅ NUEVA: pantalla real
+// ✅ Pantallas reales
+import PronunciacionGrupoA from './src/screens/N5/PronunciacionGrupoA';
 import TrazosGrupoA from './src/screens/N5/TrazosGrupoA';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -129,24 +131,24 @@ export default function App() {
           />
 
           {/* === RUTAS HIRAGANA === */}
-          {/* 👉 TrazosGrupoA ya usa la pantalla real */}
+          {/* 👉 TrazosGrupoA y PronunciacionGrupoA usan pantallas reales */}
           <Stack.Screen
             name="TrazosGrupoA"
             component={TrazosGrupoA}
             options={{ headerShown: true, title: 'Trazos — Grupo A' }}
           />
-
-          {/* Estas quedan como placeholders por ahora */}
           <Stack.Screen
             name="PronunciacionGrupoA"
+            component={PronunciacionGrupoA}
             options={{ headerShown: true, title: 'Pronunciación — Grupo A' }}
-            children={() => <Placeholder title="PronunciacionGrupoA" />}
           />
-          <Stack.Screen
-            name="EjemplosGrupoA"
-            options={{ headerShown: true, title: 'Ejemplos — Grupo A' }}
-            children={() => <Placeholder title="EjemplosGrupoA" />}
-          />
+
+          {/* Estas quedan como placeholders por ahora */}
+         <Stack.Screen
+  name="EjemplosGrupoA"
+  component={EjemplosGrupoA}
+  options={{ headerShown: true, title: 'Ejemplos — Grupo A' }}
+/>
 
           <Stack.Screen
             name="TarjetasGrupoA"
