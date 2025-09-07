@@ -1,3 +1,4 @@
+// types.ts
 export type RootStackParamList = {
   // Core
   Splash: undefined;
@@ -28,22 +29,26 @@ export type RootStackParamList = {
   // Reproductor
   VideoIntroModal: { videoId?: string } | undefined;
 
-  // === Nuevo: Hiragana Grupo A ===
+  // Hiragana Grupo A
   TrazosGrupoA: undefined;
   PronunciacionGrupoA: undefined;
   EjemplosGrupoA: undefined;
 
-  // Actividades Grupo A
+  // Implementadas nuevas
+  ATarjetas: undefined;
+  ATrazoAnimado: undefined;
+  ADictadoVisual: undefined;
+
+  // Placeholders varios
   TarjetasGrupoA: undefined;
   TrazoAnimadoGrupoA: undefined;
   DictadoVisualGrupoA: undefined;
 
-  // === Nuevo: Hiragana Grupo K ===
-  TrazoGrupoK: undefined;
+  // Grupo K
+  TrazoGrupoK: undefined;          // 👈 singular
+  PronunciacionGrupoK: undefined;
   VocabularioGrupoK: undefined;
-
-  // Actividades Grupo K
-  MatchingGrupoK: undefined;
+  MatchingGrupoK: undefined;       // 👈 NUEVA
   MemoriaGrupoK: undefined;
 };
 

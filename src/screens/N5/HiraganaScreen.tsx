@@ -39,6 +39,7 @@ function Tile({ title, icon, variant = "red", onPress }: TileProps) {
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [styles.tileBox, base, pressed && styles.pressed]}
+        hitSlop={12}
       >
         <View style={styles.innerFrame}>
           <ExpoImage
@@ -106,12 +107,12 @@ export default function HiraganaScreen() {
         <Tile
           title="Trazo"
           icon={ICONS.K_trazo}
-          onPress={() => navigation.navigate("KTrazo")}
+          onPress={() => navigation.navigate("TrazoGrupoK")}     // ✅ ruta singular
         />
         <Tile
           title="Vocabulario"
           icon={ICONS.K_vocabulario}
-          onPress={() => navigation.navigate("KVocabulario")}
+          onPress={() => navigation.navigate("VocabularioGrupoK")}
         />
       </View>
 
@@ -121,13 +122,13 @@ export default function HiraganaScreen() {
           title="Matching"
           icon={ICONS.K_matching}
           variant="gold"
-          onPress={() => navigation.navigate("KMatching")}
+          onPress={() => navigation.navigate("MatchingGrupoK")}
         />
         <Tile
           title="Memoria"
           icon={ICONS.K_memoria}
           variant="gold"
-          onPress={() => navigation.navigate("KMemoria")}
+          onPress={() => navigation.navigate("MemoriaGrupoK")}
         />
       </View>
 
@@ -142,19 +143,14 @@ export default function HiraganaScreen() {
   );
 }
 
-const RED = "#B32133";   // parecido al de tu UI
-const GOLD = "#E7A725";  // dorado de actividades
+const RED = "#B32133";
+const GOLD = "#E7A725";
 const FRAME = "#0C0C0C";
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF", paddingHorizontal: 16 },
 
-  h1: {
-    fontSize: 22,
-    fontWeight: "900",
-    marginTop: 18,
-    marginBottom: 12,
-  },
+  h1: { fontSize: 22, fontWeight: "900", marginTop: 18, marginBottom: 12 },
 
   grid: {
     flexDirection: "row",
@@ -164,15 +160,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // columna = caja + label debajo
-  tileCol: {
-    width: "31%", // 3 por fila con espacio
-    alignItems: "center",
-  },
+  tileCol: { width: "31%", alignItems: "center" },
 
   tileBox: {
     width: "100%",
-    aspectRatio: 1, // cuadrado
+    aspectRatio: 1,
     borderRadius: 18,
     padding: 12,
     justifyContent: "center",
@@ -183,10 +175,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  tileRed:  { backgroundColor: RED },
+  tileRed: { backgroundColor: RED },
   tileGold: { backgroundColor: GOLD },
 
-  // marco negro alrededor del icono (como en tu captura)
   innerFrame: {
     width: "86%",
     aspectRatio: 1,
@@ -198,18 +189,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.03)",
   },
 
-  tileLabel: {
-    marginTop: 8,
-    fontWeight: "800",
-    color: "#1F2937",
-  },
+  tileLabel: { marginTop: 8, fontWeight: "800", color: "#1F2937" },
 
-  infoCard: {
-    marginTop: 18,
-    borderRadius: 12,
-    backgroundColor: "#F0F2F4",
-    padding: 16,
-  },
+  infoCard: { marginTop: 18, borderRadius: 12, backgroundColor: "#F0F2F4", padding: 16 },
   infoText: { color: "#374151", textAlign: "center", fontWeight: "700" },
 
   pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },

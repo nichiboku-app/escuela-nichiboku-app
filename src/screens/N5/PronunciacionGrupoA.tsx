@@ -1,8 +1,9 @@
-// src/screens/N5/PronunciacionGrupoA.tsx
+import { Asset } from "expo-asset";
 import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -19,15 +20,10 @@ type KanaItem = {
   hira: string;
   romaji: string;
   example: { jp: string; romaji: string; es: string };
-  // MP3 locales (clave para buscar en LOCAL_PHRASE/LOCAL_PHRASE_SLOW)
-  phraseKey?: KanaKey;
-  // MP3 remotos (si prefieres Firebase/URLs)
-  phraseUri?: string;
-  phraseSlowUri?: string;
+  phraseKey?: KanaKey;     // clave para buscar en LOCAL_PHRASE
+  phraseUri?: string;      // opcional: remoto
 };
 
-// ---------- Mapea claves -> require() estático de MP3 locales ----------
-// Asegúrate de que estos archivos EXISTEN o comentarlos para evitar errores en build.
 const LOCAL_PHRASE: Partial<Record<KanaKey, number>> = {
   a: require("../../../assets/audio/n5/grupoA/a.mp3"),
   i: require("../../../assets/audio/n5/grupoA/i.mp3"),
@@ -36,24 +32,6 @@ const LOCAL_PHRASE: Partial<Record<KanaKey, number>> = {
   o: require("../../../assets/audio/n5/grupoA/o.mp3"),
 };
 
-// Opcional: versiones lentas si las grabas
-const LOCAL_PHRASE_SLOW: Partial<Record<KanaKey, number>> = {
-  // a: require("../../../assets/audio/n5/grupoA/a_phrase_slow.mp3"),
-  // i: require("../../../assets/audio/n5/grupoA/i_phrase_slow.mp3"),
-  // u: require("../../../assets/audio/n5/grupoA/u_phrase_slow.mp3"),
-  // e: require("../../../assets/audio/n5/grupoA/e_phrase_slow.mp3"),
-  // o: require("../../../assets/audio/n5/grupoA/o_phrase_slow.mp3"),
-};
-
-const DATA: KanaItem[] = [
-  { key: "a", hira: "あ", romaji: "a", example: { jp: "あめ", romaji: "ame", es: "lluvia" }, phraseKey: "a" },
-  { key: "i", hira: "い", romaji: "i", example: { jp: "いぬ", romaji: "inu", es: "perro" }, phraseKey: "i" },
-  { key: "u", hira: "う", romaji: "u", example: { jp: "うみ", romaji: "umi", es: "mar" }, phraseKey: "u" },
-  { key: "e", hira: "え", romaji: "e", example: { jp: "えき", romaji: "eki", es: "estación" }, phraseKey: "e" },
-  { key: "o", hira: "お", romaji: "o", example: { jp: "おちゃ", romaji: "ocha", es: "té" }, phraseKey: "o" },
-];
-
-// ---- Modo audio (compatible con SDKs recientes) ----
 async function ensurePlaybackMode() {
   await Audio.setIsEnabledAsync(true);
   await Audio.setAudioModeAsync({
@@ -75,89 +53,135 @@ async function ensureRecordMode() {
   });
 }
 
+const DATA: KanaItem[] = [
+  { key: "a", hira: "あ", romaji: "a", example: { jp: "あめ", romaji: "ame", es: "lluvia" }, phraseKey: "a" },
+  { key: "i", hira: "い", romaji: "i", example: { jp: "いぬ", romaji: "inu", es: "perro" }, phraseKey: "i" },
+  { key: "u", hira: "う", romaji: "u", example: { jp: "うみ", romaji: "umi", es: "mar" }, phraseKey: "u" },
+  { key: "e", hira: "え", romaji: "e", example: { jp: "えき", romaji: "eki", es: "estación" }, phraseKey: "e" },
+  { key: "o", hira: "お", romaji: "o", example: { jp: "おちゃ", romaji: "ocha", es: "té" }, phraseKey: "o" },
+];
+
 export default function PronunciacionGrupoA() {
-  // ====== audio global ======
+  // Precarga REAL
+  const [ready, setReady] = useState(false);
+  const soundsRef = useRef<Partial<Record<KanaKey, Audio.Sound>>>({});
+  const currentRef = useRef<Audio.Sound | null>(null);
+  const busyRef = useRef(false);
+
   useEffect(() => {
-    ensurePlaybackMode().catch(() => {});
-    return () => { try { Speech.stop(); } catch {} };
+    let cancelled = false;
+    (async () => {
+      try {
+        await ensurePlaybackMode();
+        for (const k of ["a", "i", "u", "e", "o"] as KanaKey[]) {
+          const mod = LOCAL_PHRASE[k];
+          if (!mod) continue;
+          const asset = Asset.fromModule(mod);
+          await asset.downloadAsync();
+          const uri = asset.localUri || asset.uri;
+          const sound = new Audio.Sound();
+          await sound.loadAsync({ uri }, { shouldPlay: false, volume: 1.0 });
+          soundsRef.current[k] = sound;
+        }
+        if (!cancelled) setReady(true);
+      } catch (e) {
+        console.warn("[PRELOAD] Pronunciación error", e);
+        if (!cancelled) setReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      const unloadAll = async () => {
+        await Promise.all(
+          (Object.values(soundsRef.current) as Audio.Sound[])
+            .filter(Boolean)
+            .map(async (s) => { try { await s.unloadAsync(); } catch {} })
+        );
+        soundsRef.current = {};
+      };
+      unloadAll();
+      try { Speech.stop(); } catch {}
+    };
   }, []);
 
-  // ====== TTS (respaldo si no hay MP3) ======
+  // TTS (respaldo normal)
   const [jaVoiceId, setJaVoiceId] = useState<string | null>(null);
   useEffect(() => {
-    Speech.getAvailableVoicesAsync()
-      .then(vs => setJaVoiceId(vs.find(v => v.language?.toLowerCase().startsWith("ja"))?.identifier ?? null))
-      .catch(() => {});
+    (async () => {
+      try {
+        const vs = await Speech.getAvailableVoicesAsync();
+        const ja = vs.find(v => v.language?.toLowerCase().startsWith("ja"));
+        setJaVoiceId(ja?.identifier ?? null);
+      } catch {}
+    })();
   }, []);
-
-  const speak = useCallback(async (text: string, slow = false) => {
+  const speak = useCallback(async (text: string) => {
     try {
       await ensurePlaybackMode();
       Speech.stop();
       Vibration.vibrate(6);
-      Speech.speak(text, {
-        language: "ja-JP",
-        voice: jaVoiceId ?? undefined,
-        pitch: 1.0,
-        rate: slow ? 0.7 : 1.0,
-      });
+      Speech.speak(text, { language: "ja-JP", voice: jaVoiceId ?? undefined, rate: 1.0, pitch: 1.0 });
     } catch {}
   }, [jaVoiceId]);
 
-  // ====== Reproductor MP3 (controla una sola instancia) ======
-  const soundRef = useRef<Audio.Sound | null>(null);
-
-  const stopAndUnload = useCallback(async () => {
-    const s = soundRef.current;
-    if (!s) return;
-    try {
-      await s.stopAsync();
-    } catch {}
-    try {
-      await s.unloadAsync();
-    } catch {}
-    soundRef.current = null;
+  // Reproducir
+  const stopCurrent = useCallback(async () => {
+    const cur = currentRef.current;
+    if (!cur) return;
+    try { await cur.stopAsync(); } catch {}
+    currentRef.current = null;
   }, []);
 
-  const playSource = useCallback(async (source: number | { uri: string }) => {
-    await ensurePlaybackMode();
-    await stopAndUnload();
-    const { sound } = await Audio.Sound.createAsync(source, {
-      shouldPlay: true,
-      isMuted: false,
-      volume: 1.0,
-    });
-    soundRef.current = sound;
-    sound.setOnPlaybackStatusUpdate((st) => {
-      if (st.isLoaded && st.didJustFinish) {
-        stopAndUnload();
+  const playFast = useCallback(async (item: KanaItem) => {
+    const key = (item.phraseKey ?? item.key) as KanaKey;
+
+    // remoto explícito
+    if (item.phraseUri) {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      try {
+        await ensurePlaybackMode();
+        await stopCurrent();
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: item.phraseUri },
+          { shouldPlay: true, volume: 1.0 }
+        );
+        currentRef.current = sound;
+        sound.setOnPlaybackStatusUpdate((st) => {
+          if (st.isLoaded && st.didJustFinish) {
+            try { sound.unloadAsync(); } catch {}
+            if (currentRef.current === sound) currentRef.current = null;
+          }
+        });
+      } finally {
+        setTimeout(() => { busyRef.current = false; }, 120);
       }
-    });
-  }, [stopAndUnload]);
-
-  // ====== Lógica de reproducción por item ======
-  const playKana = useCallback(async (item: KanaItem, slow = false) => {
-    // 1) MP3 remoto explícito
-    if (slow && item.phraseSlowUri) {
-      return playSource({ uri: item.phraseSlowUri });
-    }
-    if (!slow && item.phraseUri) {
-      return playSource({ uri: item.phraseUri });
+      return;
     }
 
-    // 2) MP3 local por clave
-    const key = item.phraseKey ?? item.key;
-    const srcLocal = slow ? LOCAL_PHRASE_SLOW[key] : LOCAL_PHRASE[key];
-    if (srcLocal) {
-      return playSource(srcLocal);
+    // local precargado
+    const s = soundsRef.current[key];
+    if (s) {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      try {
+        await ensurePlaybackMode();
+        await stopCurrent();
+        currentRef.current = s;
+        await s.playFromPositionAsync(0);
+      } finally {
+        setTimeout(() => { busyRef.current = false; }, 120);
+      }
+      return;
     }
 
-    // 3) Respaldo TTS
+    // fallback TTS ("あ、あめ")
     const frase = `${item.hira}、${item.example.jp}`;
-    return speak(frase, slow);
-  }, [playSource, speak]);
+    return speak(frase);
+  }, [speak, stopCurrent]);
 
-  // ====== Grabación (práctica) ======
+  // Grabación (sin cambios funcionales)
   const recordingRef = useRef<Audio.Recording | null>(null);
   const startingRef = useRef(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -174,7 +198,7 @@ export default function PronunciacionGrupoA() {
         return;
       }
       await ensureRecordMode();
-      await stopAndUnload(); // asegúrate de no estar reproduciendo nada
+      await stopCurrent();
 
       const rec = new Audio.Recording();
       await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
@@ -189,7 +213,7 @@ export default function PronunciacionGrupoA() {
     } finally {
       startingRef.current = false;
     }
-  }, [stopAndUnload]);
+  }, [stopCurrent]);
 
   const stopRecording = useCallback(async () => {
     const rec = recordingRef.current;
@@ -212,27 +236,28 @@ export default function PronunciacionGrupoA() {
     if (!playbackUri || isPlayingBack) return;
     try {
       await ensurePlaybackMode();
-      await stopAndUnload();
+      await stopCurrent();
       const { sound } = await Audio.Sound.createAsync(
         { uri: playbackUri },
         { shouldPlay: true, isMuted: false, volume: 1.0 }
       );
-      soundRef.current = sound;
+      currentRef.current = sound;
       setIsPlayingBack(true);
       sound.setOnPlaybackStatusUpdate(async (st) => {
         if (!st.isLoaded) return;
         if (st.didJustFinish) {
           setIsPlayingBack(false);
-          await stopAndUnload();
+          try { await sound.unloadAsync(); } catch {}
+          if (currentRef.current === sound) currentRef.current = null;
         }
       });
     } catch (e) {
       setIsPlayingBack(false);
-      console.warn("[PLAY] error", e);
+      console.warn("[PLAY] grabación error", e);
     }
-  }, [playbackUri, isPlayingBack, stopAndUnload]);
+  }, [playbackUri, isPlayingBack, stopCurrent]);
 
-  // ====== UI ======
+  // UI
   const renderItem = ({ item }: { item: KanaItem }) => (
     <View style={styles.card}>
       <Text style={styles.kana}>{item.hira}</Text>
@@ -247,11 +272,11 @@ export default function PronunciacionGrupoA() {
 
       <View style={styles.row}>
         <Pressable
-          style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
-          onPress={() => playKana(item, false)}
-          onLongPress={() => playKana(item, true)}
+          onPressIn={() => ready && playFast(item)}
+          disabled={!ready}
+          style={({ pressed }) => [styles.btn, (!ready || pressed) && styles.btnPressed]}
         >
-          <Text style={styles.btnText}>Reproducir{"\n"}(mantén para Lento)</Text>
+          <Text style={styles.btnText}>{ready ? "▶️ Escuchar" : "Cargando…"}</Text>
         </Pressable>
       </View>
     </View>
@@ -263,7 +288,7 @@ export default function PronunciacionGrupoA() {
     <View style={styles.container}>
       <Text style={styles.title}>Pronunciación — Grupo A</Text>
       <Text style={styles.subtitle}>
-        Toca “Reproducir” para escuchar el sonido y un ejemplo. Mantén presionado para oírlo lento.
+        Toca “Escuchar” para oír al instante.
       </Text>
 
       <FlatList
@@ -307,6 +332,18 @@ export default function PronunciacionGrupoA() {
         </View>
       </View>
 
+      {!ready && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" />
+            <Text style={{ marginTop: 8, fontWeight: "700" }}>Preparando audios…</Text>
+            <Text style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
+              Solo la primera vez que abres esta pantalla.
+            </Text>
+          </View>
+        </View>
+      )}
+
       <Text style={styles.footerNote}>
         Tip: practica con ritmo “a-i-u-e-o”, abriendo bien en “a” y cerrando en “u”.
       </Text>
@@ -336,9 +373,10 @@ const styles = StyleSheet.create({
   exampleJP: { fontSize: 20, lineHeight: 26 },
   exampleRomaji: { fontSize: 13, color: "#666", marginTop: 2 },
   row: { flexDirection: "row", justifyContent: "center", columnGap: 10, marginTop: 12 },
-  btn: { backgroundColor: "#111827", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, minWidth: 160 },
-  btnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  btn: { backgroundColor: "#111827", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, minWidth: 140 },
+  btnPressed: { opacity: 0.7, transform: [{ scale: 0.99 }] },
   btnText: { color: "#fff", textAlign: "center", fontWeight: "600" },
+
   practiceBox: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -358,5 +396,25 @@ const styles = StyleSheet.create({
   recText: { color: "#fff", fontWeight: "700" },
   playbackBtn: { backgroundColor: "#111827", flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: "center" },
   playbackText: { color: "#fff", fontWeight: "700" },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingCard: {
+    backgroundColor: "#fff",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+
   footerNote: { textAlign: "center", fontSize: 12, color: "#555", marginBottom: 12 },
 });
