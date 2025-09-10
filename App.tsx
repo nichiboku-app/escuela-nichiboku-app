@@ -1,4 +1,3 @@
-// App.tsx
 import "react-native-gesture-handler"; // 👈 Debe ir primero
 
 import { NavigationContainer } from "@react-navigation/native";
@@ -28,7 +27,8 @@ import EjemplosGrupoA from "./src/screens/N5/EjemplosGrupoA";
 import EscrituraScreen from "./src/screens/N5/EscrituraScreen";
 import GifSaludo from "./src/screens/N5/GifSaludo";
 import HiraganaScreen from "./src/screens/N5/HiraganaScreen";
-import MatchingGrupoK from "./src/screens/N5/MatchingGrupoK"; // 👈 NUEVO
+import MatchingGrupoK from "./src/screens/N5/MatchingGrupoK";
+import MemoriaGrupoK from "./src/screens/N5/MemoriaGrupoK";
 import OrigenesDelIdiomaScreen from "./src/screens/N5/OrigenesDelIdiomaScreen";
 import QuizCultural from "./src/screens/N5/QuizCultural";
 import SubtemaScreen from "./src/screens/N5/SubtemaScreen";
@@ -42,12 +42,25 @@ import ADictadoVisual from "./src/screens/N5/ADictadoVisual";
 // Modal de video N5
 import VideoIntroModal from "./src/screens/N5/VideoIntroModal";
 
-// ✅ Pantallas reales
+// ✅ Pantallas reales (Grupo A)
 import PronunciacionGrupoA from "./src/screens/N5/PronunciacionGrupoA";
 import TrazosGrupoA from "./src/screens/N5/TrazosGrupoA";
 
 // ✅ Grupo K real
 import TrazosGrupoK from "./src/screens/N5/TrazosGrupoK";
+
+// ✅ Familias S/T: menú combinado + trazos S/Z
+import FamiliaSScreen from "./src/screens/N5/FamiliaS/SEscrituraGrupoS";
+import TrazosFamiliaSZ from "./src/screens/N5/FamiliaS/TrazosFamiliaSZ";
+
+// ✅ Familia S: pantallas auxiliares
+import SCaligrafiaDigital from "./src/screens/N5/FamiliaS/SCaligrafiaDigital";
+import SEjemplosGrupoS from "./src/screens/N5/FamiliaS/SEjemplosGrupoS";
+import SLecturaSilabas from "./src/screens/N5/FamiliaS/SLecturaSilabas";
+
+// ✅ Familia T: pantallas auxiliares
+import TQuizEscucha from "./src/screens/N5/FamiliaS/TQuizEscucha";
+import TTrazoGif from "./src/screens/N5/FamiliaS/TTrazoGif";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -135,7 +148,7 @@ export default function App() {
             options={{ headerShown: false }}
           />
 
-          {/* === Matching K REAL (reemplaza placeholder) === */}
+          {/* === Matching K REAL === */}
           <Stack.Screen
             name="MatchingGrupoK"
             component={MatchingGrupoK}
@@ -207,17 +220,49 @@ export default function App() {
             children={() => <Placeholder title="TrazoAnimadoGrupoA" />}
           />
 
-          {/* === Grupo K (ruta SINGULAR en types) === */}
+          {/* === Grupo K === */}
           <Stack.Screen
             name="TrazoGrupoK"
             component={TrazosGrupoK}
             options={{ headerShown: true, title: "Trazo — Grupo K" }}
           />
-
           <Stack.Screen
             name="MemoriaGrupoK"
-            options={{ headerShown: true, title: "Memoria — Grupo K" }}
-            children={() => <Placeholder title="MemoriaGrupoK" />}
+            component={MemoriaGrupoK}
+            options={{ headerShown: false }}
+          />
+
+          {/* === Familias S/T === */}
+          <Stack.Screen name="FamiliaS" component={FamiliaSScreen} />
+          <Stack.Screen
+            name="SEscrituraGrupoS"
+            component={TrazosFamiliaSZ}
+            options={{ headerShown: true, title: "Escritura (S)" }}
+          />
+          <Stack.Screen
+            name="SEjemplosGrupoS"
+            component={SEjemplosGrupoS}
+            options={{ headerShown: true, title: "Ejemplos (S)" }}
+          />
+          <Stack.Screen
+            name="SCaligrafiaDigital"
+            component={SCaligrafiaDigital}
+            options={{ headerShown: true, title: "Caligrafía digital (S)" }}
+          />
+          <Stack.Screen
+            name="SLecturaSilabas"
+            component={SLecturaSilabas}
+            options={{ headerShown: true, title: "Lectura de sílabas (S)" }}
+          />
+          <Stack.Screen
+            name="TTrazoGif"
+            component={TTrazoGif}
+            options={{ headerShown: true, title: "Trazo (T)" }}
+          />
+          <Stack.Screen
+            name="TQuizEscucha"
+            component={TQuizEscucha}
+            options={{ headerShown: true, title: "Quiz de escucha (T)" }}
           />
         </Stack.Navigator>
       </NavigationContainer>

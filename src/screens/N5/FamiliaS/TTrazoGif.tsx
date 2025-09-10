@@ -1,8 +1,6 @@
-// src/screens/N5/TrazosGrupoA.tsx
+// src/screens/N5/FamiliaS/TTrazoGif.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
 import Slider from "@react-native-community/slider";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image as ExpoImage } from "expo-image";
 import React, {
   forwardRef,
@@ -25,71 +23,95 @@ import {
 } from "react-native";
 import { State as RNGHState, TapGestureHandler } from "react-native-gesture-handler";
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from "react-native-svg";
-import type { RootStackParamList } from "../../../types";
 
 /* ===== Tipos ===== */
-type Nav = NativeStackNavigationProp<RootStackParamList>;
-type KanaKey = "a" | "i" | "u" | "e" | "o";
+type FamilyKey = "T" | "D";
+type KanaKey =
+  | "ta" | "chi" | "tsu" | "te" | "to"
+  | "da" | "ji"  | "zu"  | "de" | "do";
 
-/* ===== Config ===== */
-const KANA_LIST: { key: KanaKey; glyph: string; label: string; color: string }[] = [
-  { key: "a", glyph: "あ", label: "a", color: "#B91C1C" },
-  { key: "i", glyph: "い", label: "i", color: "#9A3412" },
-  { key: "u", glyph: "う", label: "u", color: "#1D4ED8" },
-  { key: "e", glyph: "え", label: "e", color: "#047857" },
-  { key: "o", glyph: "お", label: "o", color: "#7C3AED" },
-];
+/* ===== Config de familias ===== */
+const FAMILY_LIST = [
+  { key: "T", label: "Familia T", color: "#B32133" },
+  { key: "D", label: "Familia D (dakuten)", color: "#0F766E" },
+] as const;
 
-const RECOMMENDED_STROKES: Record<KanaKey, number> = { a: 3, i: 2, u: 2, e: 2, o: 3 };
+const KANA_LIST: Record<FamilyKey, { key: KanaKey; glyph: string; label: string; color: string }[]> = {
+  T: [
+    { key: "ta",  glyph: "た", label: "ta",  color: "#B91C1C" },
+    { key: "chi", glyph: "ち", label: "chi", color: "#9A3412" },
+    { key: "tsu", glyph: "つ", label: "tsu", color: "#1D4ED8" },
+    { key: "te",  glyph: "て", label: "te",  color: "#047857" },
+    { key: "to",  glyph: "と", label: "to",  color: "#7C3AED" },
+  ],
+  D: [
+    { key: "da", glyph: "だ", label: "da", color: "#0E7490" },
+    { key: "ji", glyph: "ぢ", label: "ji", color: "#7C2D12" },
+    { key: "zu", glyph: "づ", label: "zu", color: "#2563EB" },
+    { key: "de", glyph: "で", label: "de", color: "#065F46" },
+    { key: "do", glyph: "ど", label: "do", color: "#6D28D9" },
+  ],
+};
+
+const RECOMMENDED_STROKES: Record<KanaKey, number> = {
+  ta: 4, chi: 2, tsu: 1, te: 1, to: 2,
+  da: 6, ji: 4, zu: 3, de: 3, do: 5,
+};
+
 const STROKE_TIPS: Record<KanaKey, string[]> = {
-  a: ["① Línea horizontal arriba.", "② Curva principal descendente.", "③ Gancho pequeño a la derecha."],
-  i: ["① Línea corta arriba.", "② Línea larga descendente curvada."],
-  u: ["① Curva pequeña superior.", "② Curva descendente y cierre a la derecha."],
-  e: ["① Línea superior.", "② Trazo largo que forma el resto (curva y cierre)."],
-  o: ["① Punto/pequeño trazo arriba.", "② Curva principal.", "③ Cierre a la derecha."],
+  ta:  ["① Barra corta.", "② Trazo oblicuo.", "③ Trazo vertical.", "④ Curva final."],
+  chi: ["① Barra corta.", "② Curva larga descendente."],
+  tsu: ["① Curva única continua."],
+  te:  ["① Barra y curva en un trazo."],
+  to:  ["① Trazo vertical curvo.", "② Trazo oblicuo corto."],
+  da:  ["①–④ como た (ta).", "⑤⑥ Dakuten (゛)."],
+  ji:  ["①–② como ち (chi).", "③④ Dakuten (゛)."],
+  zu:  ["① como つ (tsu).", "②③ Dakuten (゛)."],
+  de:  ["① como て (te).", "②③ Dakuten (゛)."],
+  do:  ["①–② como と (to).", "③④ Dakuten (゛).", "⑤ Punto final."],
 };
 
 const ORDER_HINTS: Record<KanaKey, { x: number; y: number }[]> = {
-  a: [{ x: 0.30, y: 0.17 }, { x: 0.33, y: 0.35 }, { x: 0.67, y: 0.55 }],
-  i: [{ x: 0.52, y: 0.18 }, { x: 0.56, y: 0.35 }],
-  u: [{ x: 0.56, y: 0.24 }, { x: 0.45, y: 0.60 }],
-  e: [{ x: 0.46, y: 0.19 }, { x: 0.43, y: 0.58 }],
-  o: [{ x: 0.65, y: 0.18 }, { x: 0.45, y: 0.46 }, { x: 0.64, y: 0.64 }],
+  ta:  [{x:.30,y:.25},{x:.50,y:.18},{x:.50,y:.60},{x:.72,y:.66}],
+  chi: [{x:.32,y:.20},{x:.64,y:.64}],
+  tsu: [{x:.28,y:.36}],
+  te:  [{x:.30,y:.22}],
+  to:  [{x:.36,y:.20},{x:.62,y:.34}],
+  da:  [{x:.30,y:.25},{x:.50,y:.18},{x:.50,y:.60},{x:.72,y:.66},{x:.78,y:.18},{x:.84,y:.16}],
+  ji:  [{x:.32,y:.20},{x:.64,y:.64},{x:.78,y:.18},{x:.84,y:.16}],
+  zu:  [{x:.28,y:.36},{x:.78,y:.18},{x:.84,y:.16}],
+  de:  [{x:.30,y:.22},{x:.78,y:.18},{x:.84,y:.16}],
+  do:  [{x:.36,y:.20},{x:.62,y:.34},{x:.78,y:.18},{x:.84,y:.16},{x:.74,y:.70}],
 };
 
 const GUIDE_STROKES: Record<KanaKey, string[]> = {
-  a: ["M 120 70 L 240 70", "M 160 90 C 130 150, 130 220, 210 250", "M 220 110 C 260 150, 270 185, 250 205"],
-  i: ["M 190 80 L 230 95", "M 205 95 C 180 130, 180 220, 225 255"],
-  u: ["M 210 95 C 185 115, 195 130, 225 140", "M 170 160 C 140 210, 185 260, 240 230 C 265 215, 260 195, 248 180"],
-  e: ["M 170 80 L 260 80", "M 170 110 C 150 150, 230 170, 245 135 M 165 210 C 205 235, 265 215, 245 185"],
-  o: ["M 245 75 L 225 88", "M 205 105 C 165 145, 165 215, 225 245 C 265 260, 295 215, 265 185", "M 265 185 C 255 195, 250 205, 250 205"],
+  ta: [], chi: [], tsu: [], te: [], to: [],
+  da: [], ji: [], zu: [], de: [], do: [],
 };
-
 const OUTLINES: Record<KanaKey, string> = {
-  a: "M 120 70 L 240 70 M 160 90 C 130 150, 130 220, 210 250 M 220 110 C 260 150, 270 185, 250 205",
-  i: "M 190 80 L 230 95 M 205 95 C 180 130, 180 220, 225 255",
-  u: "M 210 95 C 185 115, 195 130, 225 140 M 170 160 C 140 210, 185 260, 240 230 C 265 215, 260 195, 248 180",
-  e: "M 170 80 L 260 80 M 170 110 C 150 150, 230 170, 245 135 M 165 210 C 205 235, 265 215, 245 185",
-  o: "M 245 75 L 225 88 M 205 105 C 165 145, 165 215, 225 245 C 265 260, 295 215, 265 185",
+  ta:"", chi:"", tsu:"", te:"", to:"",
+  da:"", ji:"", zu:"", de:"", do:"",
 };
 
-const ICON_TIPS = require("../../../assets/icons/hiragana/A_trazos.webp");
+const ICON_TIPS = require("../../../../assets/icons/hiragana/SFamilia.webp");
 
-const STROKE_ORDER_IMAGE: Record<KanaKey, any> = {
-  a: require("../../../assets/strokeorder/images/hiragana-a.webp"),
-  i: require("../../../assets/strokeorder/images/hiragana-i.webp"),
-  u: require("../../../assets/strokeorder/images/hiragana-u.webp"),
-  e: require("../../../assets/strokeorder/images/hiragana-e.webp"),
-  o: require("../../../assets/strokeorder/images/hiragana-o.webp"),
+/** RUTA CORRECTA de tus imágenes (familiaTD) */
+const STROKE_ORDER_IMAGE: Partial<Record<KanaKey, any>> = {
+  ta:  require("../../../../assets/images/Familiast/familiaTD/ta.webp"),
+  chi: require("../../../../assets/images/Familiast/familiaTD/chi.webp"),
+  tsu: require("../../../../assets/images/Familiast/familiaTD/tsu.webp"),
+  te:  require("../../../../assets/images/Familiast/familiaTD/te.webp"),
+  to:  require("../../../../assets/images/Familiast/familiaTD/to.webp"),
+  da:  require("../../../../assets/images/Familiast/familiaTD/da.webp"),
+  ji:  require("../../../../assets/images/Familiast/familiaTD/ji.webp"),
+  zu:  require("../../../../assets/images/Familiast/familiaTD/zu.webp"),
+  de:  require("../../../../assets/images/Familiast/familiaTD/de.webp"),
+  do:  require("../../../../assets/images/Familiast/familiaTD/do.webp"),
 };
 
-/* ========= Botón con TapGestureHandler (anti “zona exacta”) ========= */
+/* ========= Botón con TapGestureHandler ========= */
 function TapButton({
-  children,
-  onPress,
-  style,
-  role,
-  simultaneousHandlers,
+  children, onPress, style, role, simultaneousHandlers,
 }: {
   children?: React.ReactNode;
   onPress: () => void;
@@ -118,7 +140,7 @@ function TapButton({
   );
 }
 
-/* ===== Lienzo (API imperativa) ===== */
+/* ===== Lienzo ===== */
 type StrokeItem = { color: string; width: number; d: string };
 export type TraceCanvasHandle = { undo: () => void; clear: () => void };
 
@@ -134,21 +156,11 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
   showStrokeGuides: boolean;
   baseGuideOpacity: number;
 }>(({
-  kana,
-  glyph,
-  showGrid,
-  showGuide,
-  resetKey,
-  reportCount,
-  toggleScroll,
-  fontLoaded,
-  showStrokeGuides,
-  baseGuideOpacity,
+  kana, glyph, showGrid, showGuide, resetKey, reportCount,
+  toggleScroll, fontLoaded, showStrokeGuides, baseGuideOpacity,
 }, ref) => {
   const { width } = useWindowDimensions();
   const SIZE = Math.min(width - 32, 360);
-
-  // Pincel fijo para A (simple y claro)
   const INK_COLOR = "#111827";
   const STROKE_WIDTH = 10;
 
@@ -192,16 +204,14 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
     setLocalCount((n) => Math.max(0, n - 1));
   }, []);
   const clear = useCallback(() => {
-    setStrokes([]);
-    setCurrentPath("");
-    setLocalCount(0);
+    setStrokes([]); setCurrentPath(""); setLocalCount(0);
   }, []);
 
   useImperativeHandle(ref, () => ({ undo, clear }), [undo, clear]);
 
   const gridLines = useMemo(() => Array.from({ length: 3 }, (_, i) => ((i + 1) * SIZE) / 4), [SIZE]);
   const fontSize = SIZE * 0.72;
-  const hints = ORDER_HINTS[kana];
+  const hints = ORDER_HINTS[kana] || [];
 
   return (
     <View style={{ alignSelf: "center" }}>
@@ -218,7 +228,6 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
       >
         <Rect x={0} y={0} width={SIZE} height={SIZE} rx={16} fill="#FFF8EF" stroke="#E7D8BF" strokeWidth={2} />
 
-        {/* Cuadrícula */}
         {showGrid && (
           <G>
             {gridLines.map((p, i) => <Line key={`v-${i}`} x1={p} y1={0} x2={p} y2={SIZE} stroke="#E4D2B2" strokeDasharray="6 10" />)}
@@ -228,7 +237,6 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
           </G>
         )}
 
-        {/* Guía principal */}
         {showGuide && (
           fontLoaded ? (
             <SvgText
@@ -246,13 +254,10 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
             >
               {glyph}
             </SvgText>
-          ) : (
-            <Path d={OUTLINES[kana]} stroke="#9CA3AF" strokeWidth={8} fill="none" opacity={0.25} />
-          )
+          ) : OUTLINES ? null : null
         )}
 
-        {/* Números de orden */}
-        {showGuide && hints?.map((h, i) => {
+        {showGuide && hints.map((h, i) => {
           const cx = h.x * SIZE, cy = h.y * SIZE;
           return (
             <G key={`hint-${i}`} opacity={0.95}>
@@ -264,24 +269,18 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
           );
         })}
 
-        {/* Líneas guía opcionales */}
         {showStrokeGuides && (
           <G>
             {GUIDE_STROKES[kana].map((d, idx) => (
-              <Path
-                key={`g-${idx}`} d={d} stroke="#111827" strokeWidth={4}
-                opacity={baseGuideOpacity} fill="none" strokeLinecap="round" strokeLinejoin="round"
-              />
+              <Path key={`g-${idx}`} d={d} stroke="#111827" strokeWidth={4} opacity={baseGuideOpacity} fill="none" strokeLinecap="round" strokeLinejoin="round" />
             ))}
           </G>
         )}
 
-        {/* Trazo en curso */}
         {!!currentPath && (
           <Path d={currentPath} stroke={INK_COLOR} strokeWidth={STROKE_WIDTH} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         )}
 
-        {/* Trazos del usuario */}
         <G>
           {strokes.map((s, idx) => (
             <Path key={idx} d={s.d} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -293,7 +292,7 @@ const TraceCanvas = forwardRef<TraceCanvasHandle, {
 });
 TraceCanvas.displayName = "TraceCanvas";
 
-/* ===== Tarjeta de imagen con tap ===== */
+/* ===== Tarjeta de imagen (arriba del lienzo) + modal ===== */
 function StrokeOrderImageCard({ kana, simultaneousHandlers }: { kana: KanaKey; simultaneousHandlers?: any }) {
   const src = STROKE_ORDER_IMAGE[kana];
   const { width } = useWindowDimensions();
@@ -301,21 +300,19 @@ function StrokeOrderImageCard({ kana, simultaneousHandlers }: { kana: KanaKey; s
   const H = 220;
   const [open, setOpen] = useState(false);
 
+  if (!src) return null;
+
   const openWithHaptic = () => { Vibration.vibrate(8); setOpen(true); };
   const closeWithHaptic = () => { Vibration.vibrate(8); setOpen(false); };
 
   return (
     <View style={styles.imageWrap} collapsable={false}>
-      <TapButton onPress={openWithHaptic} style={{ width: "100%", borderRadius: 12 }} simultaneousHandlers={simultaneousHandlers}>
-        <ExpoImage source={src} style={{ width: "100%", height: H, borderRadius: 12 }} contentFit="contain" />
-      </TapButton>
-
+      <ExpoImage source={src} style={{ width: "100%", height: H, borderRadius: 12 }} contentFit="contain" />
       <View style={styles.lottieControls}>
         <TapButton onPress={openWithHaptic} style={styles.smallBtn} simultaneousHandlers={simultaneousHandlers}>
           <Text style={styles.smallBtnText} pointerEvents="none">Ampliar imagen</Text>
         </TapButton>
       </View>
-      <Text style={styles.imageHint}>Orden de trazos (imagen)</Text>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={closeWithHaptic}>
         <View style={styles.modalBackdrop}>
@@ -333,22 +330,12 @@ function StrokeOrderImageCard({ kana, simultaneousHandlers }: { kana: KanaKey; s
   );
 }
 
-/* ===== Pill (opción) con tap ===== */
-function Pill({ label, active, onPress, simultaneousHandlers }: { label: string; active?: boolean; onPress: () => void; simultaneousHandlers?: any }) {
-  const press = () => { Vibration.vibrate(8); onPress(); };
-  return (
-    <TapButton onPress={press} style={[styles.pill, active && styles.pillActive]} role="button" simultaneousHandlers={simultaneousHandlers}>
-      <Text pointerEvents="none" style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
-    </TapButton>
-  );
-}
-
 /* ===== Pantalla ===== */
-export default function TrazosGrupoA() {
-  const navigation = useNavigation<Nav>();
+export default function TTrazoGif() {
   const [fontsLoaded] = useFonts({ NotoSansJP_700Bold });
 
-  const [kana, setKana] = useState<KanaKey>("a");
+  const [family, setFamily] = useState<FamilyKey>("T");
+  const [kana, setKana] = useState<KanaKey>("ta");
   const [resetKey, setResetKey] = useState(0);
   const [showGuide, setShowGuide] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
@@ -358,21 +345,17 @@ export default function TrazosGrupoA() {
   const [count, setCount] = useState<number>(0);
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
+  const kanaList = KANA_LIST[family];
+  const glyph = (kanaList.find(k => k.key === kana) || kanaList[0]).glyph;
   const tips = STROKE_TIPS[kana];
-  const glyph = KANA_LIST.find((k) => k.key === kana)!.glyph;
   const recommended = RECOMMENDED_STROKES[kana];
 
   const scrollSimultaneousRef = useRef<any>(null);
 
-  useEffect(() => { setCount(0); setResetKey((n) => n + 1); }, [kana]);
-
-  const toggleGuide = useCallback(() => setShowGuide((v) => !v), []);
-  const toggleGrid = useCallback(() => setShowGrid((v) => !v), []);
-  const toggleStrokeGuides = useCallback(() => setShowStrokeGuides((v) => !v), []);
+  useEffect(() => { setKana(KANA_LIST[family][0].key); }, [family]);
+  useEffect(() => { setCount(0); setResetKey(n => n + 1); }, [kana]);
 
   const canvasRef = useRef<TraceCanvasHandle>(null);
-
-  const selectKana = (k: KanaKey) => { Vibration.vibrate(8); setKana(k); };
 
   return (
     <ScrollView
@@ -385,24 +368,42 @@ export default function TrazosGrupoA() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Trazos — Grupo A</Text>
-        <Text style={styles.subtitle}>Practica あ・い・う・え・お con guía y cuadrícula</Text>
+        <Text style={styles.title}>Gif interactivo — Familias T/D</Text>
+        <Text style={styles.subtitle}>Toca un botón para ver el orden de trazos del carácter.</Text>
       </View>
 
-      {/* Selector */}
-      <Text style={styles.sectionTitle}>Elige el carácter</Text>
+      {/* Selector de familia */}
       <View style={styles.selectorRow} collapsable={false}>
-        {KANA_LIST.map((k) => {
-          const isActive = kana === k.key;
+        {FAMILY_LIST.map((f) => {
+          const active = family === f.key;
+          return (
+            <TapButton
+              key={f.key}
+              onPress={() => setFamily(f.key)}
+              role="button"
+              style={[styles.kanaBtn, { backgroundColor: f.color }, active && styles.kanaBtnActive]}
+              simultaneousHandlers={scrollSimultaneousRef}
+            >
+              <Text pointerEvents="none" style={styles.kanaGlyph}>{f.key}</Text>
+              <Text pointerEvents="none" style={styles.kanaLabel}>{f.label}</Text>
+            </TapButton>
+          );
+        })}
+      </View>
+
+      {/* Selector de carácter */}
+      <View style={styles.selectorRowWrap}>
+        {kanaList.map((k) => {
+          const active = kana === k.key;
           return (
             <TapButton
               key={k.key}
-              onPress={() => selectKana(k.key)}
+              onPress={() => setKana(k.key)}
               role="button"
-              style={[styles.kanaBtn, { backgroundColor: k.color }, isActive && styles.kanaBtnActive]}
+              style={[styles.kanaBtnSmall, { backgroundColor: k.color }, active && styles.kanaBtnActive]}
               simultaneousHandlers={scrollSimultaneousRef}
             >
-              <Text pointerEvents="none" style={styles.kanaGlyph}>{k.glyph}</Text>
+              <Text pointerEvents="none" style={styles.kanaGlyphSmall}>{k.glyph}</Text>
               <Text pointerEvents="none" style={styles.kanaLabel}>{k.label}</Text>
             </TapButton>
           );
@@ -422,7 +423,8 @@ export default function TrazosGrupoA() {
         </View>
       </View>
 
-      {/* Imagen */}
+      {/* === AQUÍ LA IMAGEN (arriba del lienzo) === */}
+      <Text style={styles.sectionTitle}>Orden de trazos (imagen)</Text>
       <View style={{ marginHorizontal: 16, marginTop: 6 }}>
         <StrokeOrderImageCard kana={kana} simultaneousHandlers={scrollSimultaneousRef} />
       </View>
@@ -430,12 +432,17 @@ export default function TrazosGrupoA() {
       {/* Opciones */}
       <Text style={styles.sectionTitle}>Opciones</Text>
       <View style={styles.pillsRow} collapsable={false}>
-        <Pill label="Guía" active={showGuide} onPress={toggleGuide} simultaneousHandlers={scrollSimultaneousRef} />
-        <Pill label="Cuadrícula" active={showGrid} onPress={toggleGrid} simultaneousHandlers={scrollSimultaneousRef} />
-        <Pill label="Líneas guía" active={showStrokeGuides} onPress={toggleStrokeGuides} simultaneousHandlers={scrollSimultaneousRef} />
+        <TapButton onPress={() => setShowGuide(v => !v)} style={[styles.pill, showGuide && styles.pillActive]} role="button" simultaneousHandlers={scrollSimultaneousRef}>
+          <Text pointerEvents="none" style={[styles.pillText, showGuide && styles.pillTextActive]}>Guía</Text>
+        </TapButton>
+        <TapButton onPress={() => setShowGrid(v => !v)} style={[styles.pill, showGrid && styles.pillActive]} role="button" simultaneousHandlers={scrollSimultaneousRef}>
+          <Text pointerEvents="none" style={[styles.pillText, showGrid && styles.pillTextActive]}>Cuadrícula</Text>
+        </TapButton>
+        <TapButton onPress={() => setShowStrokeGuides(v => !v)} style={[styles.pill, showStrokeGuides && styles.pillActive]} role="button" simultaneousHandlers={scrollSimultaneousRef}>
+          <Text pointerEvents="none" style={[styles.pillText, showStrokeGuides && styles.pillTextActive]}>Líneas guía</Text>
+        </TapButton>
       </View>
 
-      {/* Slider opacidad */}
       {showStrokeGuides && (
         <View style={styles.sliderRow}>
           <Text style={styles.sliderLabel}>Opacidad de líneas guía</Text>
@@ -470,54 +477,61 @@ export default function TrazosGrupoA() {
         baseGuideOpacity={baseGuideOpacity}
       />
 
-      {/* Toolbar */}
+      {/* Toolbar + botón extra para ver imagen en modal (opcional) */}
       <View style={styles.toolbar} collapsable={false}>
-        <TapButton
-          onPress={() => { canvasRef.current?.undo(); Vibration.vibrate(10); }}
-          role="button"
-          style={styles.toolBtn}
-          simultaneousHandlers={scrollSimultaneousRef}
-        >
+        <TapButton onPress={() => { canvasRef.current?.undo(); Vibration.vibrate(10); }} role="button" style={styles.toolBtn} simultaneousHandlers={scrollSimultaneousRef}>
           <Text pointerEvents="none" style={styles.toolBtnText}>Deshacer</Text>
         </TapButton>
-
-        <TapButton
-          onPress={() => { canvasRef.current?.clear(); Vibration.vibrate(20); }}
-          role="button"
-          style={styles.toolBtn}
-          simultaneousHandlers={scrollSimultaneousRef}
-        >
+        <TapButton onPress={() => { canvasRef.current?.clear(); Vibration.vibrate(20); }} role="button" style={styles.toolBtn} simultaneousHandlers={scrollSimultaneousRef}>
           <Text pointerEvents="none" style={styles.toolBtnText}>Borrar todo</Text>
+        </TapButton>
+        {/* Botón rápido para modal (además de la tarjeta) */}
+        <TapButton onPress={() => Vibration.vibrate(1)} style={styles.toolBtnAlt} role="button" simultaneousHandlers={scrollSimultaneousRef}>
+          <OrderImageModalButtonInner kana={kana} />
         </TapButton>
       </View>
 
-      {/* Consejos */}
+      {/* Nota じ/ぢ y ず/づ */}
       <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>Consejos</Text>
+        <Text style={styles.infoTitle}>¿じ(ji) o ぢ(ji)? ¿ず(zu) o づ(zu)?</Text>
         <Text style={styles.infoText}>
-          • Mantén el orden de los trazos.{"\n"}
-          • Practica lento al inicio y luego a velocidad natural.{"\n"}
-          • Suelta la presión al final para un acabado limpio.{"\n"}
-          • Repite 3–5 veces cada carácter antes de pasar al siguiente.
+          • En japonés estándar, <Text style={{fontWeight:"900"}}>じ/ぢ</Text> suenan igual (ji) y <Text style={{fontWeight:"900"}}>ず/づ</Text> suenan igual (zu).{"\n"}
+          • Usa normalmente <Text style={{fontWeight:"900"}}>じ</Text> y <Text style={{fontWeight:"900"}}>ず</Text>.{"\n"}
+          • Escribe <Text style={{fontWeight:"900"}}>ぢ/づ</Text> cuando provienen de <Text style={{fontWeight:"900"}}>ち/つ</Text> por <Text style={{fontStyle:"italic"}}>rendaku</Text> o repetición: はなぢ, つづく, ちぢむ, みかづき.
         </Text>
       </View>
-
-      {/* Siguiente */}
-      <TapButton
-        onPress={() => { Vibration.vibrate(12); navigation.navigate("PronunciacionGrupoA"); }}
-        role="button"
-        style={styles.nextBtn}
-        simultaneousHandlers={scrollSimultaneousRef}
-      >
-        <Text pointerEvents="none" style={styles.nextText}>Siguiente: Pronunciación del grupo A ➜</Text>
-      </TapButton>
     </ScrollView>
+  );
+}
+
+/* Botón compacto que abre el mismo modal de la imagen (para la toolbar) */
+function OrderImageModalButtonInner({ kana }: { kana: KanaKey }) {
+  const src = STROKE_ORDER_IMAGE[kana];
+  const { width } = useWindowDimensions();
+  const W = Math.min(width - 32, 520);
+  const [open, setOpen] = useState(false);
+  if (!src) return <Text style={styles.toolBtnTextAlt}>Ver orden (imagen)</Text>;
+  return (
+    <>
+      <Text style={styles.toolBtnTextAlt}>Ver orden (imagen)</Text>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { width: W, maxWidth: 560 }]}>
+            <ExpoImage source={src} style={{ width: "100%", height: W * 0.9, borderRadius: 12 }} contentFit="contain" />
+            <TapButton onPress={() => setOpen(false)} style={[styles.smallBtnAlt, { marginTop: 10 }]}>
+              <Text style={styles.smallBtnTextAlt} pointerEvents="none">Cerrar</Text>
+            </TapButton>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
 /* ===== Estilos ===== */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
+
   header: { padding: 20, backgroundColor: "#a41034" },
   title: { color: "#fff", fontWeight: "900", fontSize: 22 },
   subtitle: { color: "#FBE8E8", marginTop: 6 },
@@ -525,32 +539,25 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: "800", marginTop: 18, marginBottom: 8, marginLeft: 16 },
 
   selectorRow: {
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginTop: 6,
-    zIndex: 10,
-    elevation: 10,
+    flexDirection: "row", gap: 10, justifyContent: "space-between",
+    paddingHorizontal: 16, marginTop: 6, zIndex: 10, elevation: 10,
   },
+  selectorRowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16, marginTop: 6 },
+
   kanaBtn: {
-    flex: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: "#111",
+    flex: 1, borderRadius: 14, paddingVertical: 12, minHeight: 48,
+    alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#111",
+  },
+  kanaBtnSmall: {
+    width: "30%", borderRadius: 14, paddingVertical: 10, minHeight: 56,
+    alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#111",
   },
   kanaBtnActive: {
     transform: [{ translateY: -2 }],
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 5 },
+    shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 5 },
   },
-  kanaGlyph: { fontSize: 34, color: "#fff", fontWeight: "900", lineHeight: 36 },
+  kanaGlyph: { fontSize: 28, color: "#fff", fontWeight: "900", lineHeight: 30 },
+  kanaGlyphSmall: { fontSize: 30, color: "#fff", fontWeight: "900", lineHeight: 32 },
   kanaLabel: { fontSize: 12, color: "#fff", marginTop: 4, opacity: 0.9 },
 
   tipsBox: {
@@ -565,28 +572,10 @@ const styles = StyleSheet.create({
   counterText: { color: "#fff", fontWeight: "900", fontSize: 16, lineHeight: 16 },
   counterSub: { color: "#D1D5DB", fontSize: 10 },
 
-  pillsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 16,
-    marginBottom: 6,
-    marginTop: 6,
-    zIndex: 10,
-    elevation: 10,
-  },
+  pillsRow: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, marginBottom: 6, marginTop: 6, zIndex: 10, elevation: 10 },
   pill: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#C4B69B",
-    backgroundColor: "#FFFDF9",
-    marginRight: 8,
-    marginBottom: 8,
-    minHeight: 44,
-    minWidth: 88,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 12, paddingVertical: 12, borderRadius: 999, borderWidth: 1, borderColor: "#C4B69B",
+    backgroundColor: "#FFFDF9", marginRight: 8, marginBottom: 8, minHeight: 44, minWidth: 88, alignItems: "center", justifyContent: "center",
   },
   pillActive: { backgroundColor: "#111827", borderColor: "#111827" },
   pillText: { color: "#3B2B1B", fontWeight: "700" },
@@ -596,34 +585,29 @@ const styles = StyleSheet.create({
   sliderLabel: { fontWeight: "800", color: "#111827", marginRight: 6 },
   sliderValue: { width: 44, textAlign: "right", fontWeight: "800", color: "#111827", marginLeft: 6 },
 
-  toolbar: { flexDirection: "row", alignSelf: "center", marginTop: 10, zIndex: 10, elevation: 10 },
-  toolBtn: {
-    backgroundColor: "#111827",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 48,
-    minWidth: 120,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 6,
-  },
-  toolBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
+  /* Tarjeta de imagen */
+  imageWrap: { borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F9FAFB", borderRadius: 14, padding: 10, marginHorizontal: 16 },
 
-  imageWrap: { borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F9FAFB", borderRadius: 14, padding: 8 },
   lottieControls: { flexDirection: "row", marginTop: 8, justifyContent: "center" },
   smallBtn: { backgroundColor: "#111827", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#111827" },
   smallBtnText: { color: "#fff", fontWeight: "800", fontSize: 12 },
   smallBtnAlt: { backgroundColor: "#F3F4F6", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#D1D5DB" },
   smallBtnTextAlt: { color: "#111827", fontWeight: "800", fontSize: 12 },
-  imageHint: { marginTop: 6, textAlign: "center", color: "#374151", fontSize: 12, fontWeight: "800", opacity: 0.85 },
+
+  /* Lienzo toolbar */
+  toolbar: { flexDirection: "row", alignSelf: "center", marginTop: 10, zIndex: 10, elevation: 10, flexWrap: "wrap", gap: 8 },
+  toolBtn: {
+    backgroundColor: "#111827", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
+    minHeight: 48, minWidth: 120, alignItems: "center", justifyContent: "center", marginHorizontal: 6,
+  },
+  toolBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
+
+  toolBtnAlt: { backgroundColor: "#F3F4F6", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "#D1D5DB" },
+  toolBtnTextAlt: { color: "#111827", fontWeight: "900", fontSize: 14 },
 
   infoCard: { marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 14, backgroundColor: "#F3F4F6", borderWidth: 1, borderColor: "#E5E7EB" },
   infoTitle: { fontWeight: "900", marginBottom: 6, color: "#111827" },
   infoText: { color: "#374151" },
-
-  nextBtn: { marginTop: 18, alignSelf: "center", backgroundColor: "#111827", paddingVertical: 14, paddingHorizontal: 18, borderRadius: 14 },
-  nextText: { color: "#fff", fontWeight: "900" },
 
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
   modalCard: { backgroundColor: "#fff", borderRadius: 16, padding: 10, alignItems: "center" },

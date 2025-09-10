@@ -26,7 +26,7 @@ const ICONS = {
 
 type TileProps = {
   title: string;
-  icon: any;
+  icon?: any;
   variant?: "red" | "gold";
   onPress: () => void;
 };
@@ -42,11 +42,13 @@ function Tile({ title, icon, variant = "red", onPress }: TileProps) {
         hitSlop={12}
       >
         <View style={styles.innerFrame}>
-          <ExpoImage
-            source={icon}
-            style={{ width: 74, height: 74 }}
-            contentFit="contain"
-          />
+          {icon && (
+            <ExpoImage
+              source={icon}
+              style={{ width: 74, height: 74 }}
+              contentFit="contain"
+            />
+          )}
         </View>
       </Pressable>
       <Text style={styles.tileLabel}>{title}</Text>
@@ -107,7 +109,7 @@ export default function HiraganaScreen() {
         <Tile
           title="Trazo"
           icon={ICONS.K_trazo}
-          onPress={() => navigation.navigate("TrazoGrupoK")}     // ✅ ruta singular
+          onPress={() => navigation.navigate("TrazoGrupoK")}
         />
         <Tile
           title="Vocabulario"
@@ -138,6 +140,19 @@ export default function HiraganaScreen() {
           Aprende hiragana paso a paso. Practica trazos, pronunciación y vocabulario
           con actividades interactivas para que tu aprendizaje sea más dinámico y divertido.
         </Text>
+      </View>
+
+      {/* Botón para siguiente sección */}
+      <View style={{ marginTop: 28, alignItems: "center" }}>
+<Pressable
+  style={({ pressed }) => [
+    styles.nextButton,
+    pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
+  ]}
+  onPress={() => navigation.navigate("FamiliaS")} // ✅ ruta corregida
+>
+  <Text style={styles.nextButtonText}>Ir a Familias S y T ➝</Text>
+</Pressable>
       </View>
     </ScrollView>
   );
@@ -195,4 +210,16 @@ const styles = StyleSheet.create({
   infoText: { color: "#374151", textAlign: "center", fontWeight: "700" },
 
   pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
+
+  nextButton: {
+    backgroundColor: RED,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+  },
+  nextButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 18,
+  },
 });

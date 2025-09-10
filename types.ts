@@ -1,4 +1,3 @@
-// types.ts
 export type RootStackParamList = {
   // Core
   Splash: undefined;
@@ -45,11 +44,24 @@ export type RootStackParamList = {
   DictadoVisualGrupoA: undefined;
 
   // Grupo K
-  TrazoGrupoK: undefined;          // 👈 singular
+  TrazoGrupoK: undefined;
   PronunciacionGrupoK: undefined;
   VocabularioGrupoK: undefined;
-  MatchingGrupoK: undefined;       // 👈 NUEVA
+  MatchingGrupoK: undefined;
   MemoriaGrupoK: undefined;
+
+  // Familias S/T
+  FamiliaS: undefined;
+
+  // Grupo S
+  SEscrituraGrupoS: undefined;
+  SEjemplosGrupoS: undefined;
+  SCaligrafiaDigital: undefined;
+  SLecturaSilabas: undefined;
+
+  // Grupo T
+  TTrazoGif: undefined;
+  TQuizEscucha: undefined;
 };
 
 declare global {
