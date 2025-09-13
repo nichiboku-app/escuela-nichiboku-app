@@ -61,6 +61,10 @@ import SLecturaSilabas from "./src/screens/N5/FamiliaS/SLecturaSilabas";
 // ✅ Familia T: pantallas auxiliares
 import TQuizEscucha from "./src/screens/N5/FamiliaS/TQuizEscucha";
 import TTrazoGif from "./src/screens/N5/FamiliaS/TTrazoGif";
+//familia N
+import FamiliaNHScreen from "./src/screens/N5/FamiliaN/FamiliaNHScreen";
+import HRoleplaySaludoScreen from "./src/screens/N5/FamiliaN/HRoleplaySaludoScreen";
+import NLecturaGuiadaScreen from "./src/screens/N5/FamiliaN/NLecturaGuiadaScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -264,6 +268,22 @@ export default function App() {
             component={TQuizEscucha}
             options={{ headerShown: true, title: "Quiz de escucha (T)" }}
           />
+          <Stack.Screen
+  name="FamiliaNH"
+  component={FamiliaNHScreen}
+  options={{ title: "Familias N y H" }}
+/>
+<Stack.Screen
+  name="NLecturaGuiada"
+  component={NLecturaGuiadaScreen}
+  options={{ title: "Lectura guiada (N)" }}
+/>
+<Stack.Screen
+  name="HRoleplaySaludo"
+  component={HRoleplaySaludoScreen}
+  options={{ title: "Roleplay: me llamo..." }}
+/>
+
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>

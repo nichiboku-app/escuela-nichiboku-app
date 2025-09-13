@@ -62,6 +62,9 @@ export type RootStackParamList = {
   // Grupo T
   TTrazoGif: undefined;
   TQuizEscucha: undefined;
+  FamiliaNH: undefined;
+  NLecturaGuiada: undefined;
+  HRoleplaySaludo: undefined;
 };
 
 declare global {

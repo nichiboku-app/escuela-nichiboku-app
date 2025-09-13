@@ -33,6 +33,7 @@ function OptionButton({
 
 export default function FamiliaSScreen() {
   const navigation = useNavigation<Nav>();
+  const go = (route: string) => (navigation as any).navigate(route as never);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 28 }}>
@@ -106,6 +107,17 @@ export default function FamiliaSScreen() {
           subtitle="Identifica た・ち・つ・て・と por audio"
           onPress={() => navigation.navigate("TQuizEscucha")}
           variant="gold"
+        />
+      </View>
+
+      {/* ======= Siguiente bloque: Familias N/H ======= */}
+      <Text style={[styles.h2, { marginTop: 28 }]}>Siguiente bloque</Text>
+      <View style={styles.grid}>
+        <OptionButton
+          title="Familias N y H →"
+          subtitle="Lectura guiada + Roleplay は"
+          onPress={() => go("FamiliaNH")}   // Asegura registrar esta ruta en tu navigator
+          variant="red"
         />
       </View>
     </ScrollView>
