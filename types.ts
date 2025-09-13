@@ -28,23 +28,43 @@ export type RootStackParamList = {
   // Reproductor
   VideoIntroModal: { videoId?: string } | undefined;
 
-  // === Nuevo: Hiragana Grupo A ===
+  // Hiragana Grupo A
   TrazosGrupoA: undefined;
   PronunciacionGrupoA: undefined;
   EjemplosGrupoA: undefined;
 
-  // Actividades Grupo A
+  // Implementadas nuevas
+  ATarjetas: undefined;
+  ATrazoAnimado: undefined;
+  ADictadoVisual: undefined;
+
+  // Placeholders varios
   TarjetasGrupoA: undefined;
   TrazoAnimadoGrupoA: undefined;
   DictadoVisualGrupoA: undefined;
 
-  // === Nuevo: Hiragana Grupo K ===
+  // Grupo K
   TrazoGrupoK: undefined;
+  PronunciacionGrupoK: undefined;
   VocabularioGrupoK: undefined;
-
-  // Actividades Grupo K
   MatchingGrupoK: undefined;
   MemoriaGrupoK: undefined;
+
+  // Familias S/T
+  FamiliaS: undefined;
+
+  // Grupo S
+  SEscrituraGrupoS: undefined;
+  SEjemplosGrupoS: undefined;
+  SCaligrafiaDigital: undefined;
+  SLecturaSilabas: undefined;
+
+  // Grupo T
+  TTrazoGif: undefined;
+  TQuizEscucha: undefined;
+  FamiliaNH: undefined;
+  NLecturaGuiada: undefined;
+  HRoleplaySaludo: undefined;
 };
 
 declare global {

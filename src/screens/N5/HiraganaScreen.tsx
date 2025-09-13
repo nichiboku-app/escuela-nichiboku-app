@@ -26,7 +26,7 @@ const ICONS = {
 
 type TileProps = {
   title: string;
-  icon: any;
+  icon?: any;
   variant?: "red" | "gold";
   onPress: () => void;
 };
@@ -39,13 +39,16 @@ function Tile({ title, icon, variant = "red", onPress }: TileProps) {
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [styles.tileBox, base, pressed && styles.pressed]}
+        hitSlop={12}
       >
         <View style={styles.innerFrame}>
-          <ExpoImage
-            source={icon}
-            style={{ width: 74, height: 74 }}
-            contentFit="contain"
-          />
+          {icon && (
+            <ExpoImage
+              source={icon}
+              style={{ width: 74, height: 74 }}
+              contentFit="contain"
+            />
+          )}
         </View>
       </Pressable>
       <Text style={styles.tileLabel}>{title}</Text>
@@ -106,12 +109,12 @@ export default function HiraganaScreen() {
         <Tile
           title="Trazo"
           icon={ICONS.K_trazo}
-          onPress={() => navigation.navigate("KTrazo")}
+          onPress={() => navigation.navigate("TrazoGrupoK")}
         />
         <Tile
           title="Vocabulario"
           icon={ICONS.K_vocabulario}
-          onPress={() => navigation.navigate("KVocabulario")}
+          onPress={() => navigation.navigate("VocabularioGrupoK")}
         />
       </View>
 
@@ -121,13 +124,13 @@ export default function HiraganaScreen() {
           title="Matching"
           icon={ICONS.K_matching}
           variant="gold"
-          onPress={() => navigation.navigate("KMatching")}
+          onPress={() => navigation.navigate("MatchingGrupoK")}
         />
         <Tile
           title="Memoria"
           icon={ICONS.K_memoria}
           variant="gold"
-          onPress={() => navigation.navigate("KMemoria")}
+          onPress={() => navigation.navigate("MemoriaGrupoK")}
         />
       </View>
 
@@ -138,23 +141,31 @@ export default function HiraganaScreen() {
           con actividades interactivas para que tu aprendizaje sea más dinámico y divertido.
         </Text>
       </View>
+
+      {/* Botón para siguiente sección */}
+      <View style={{ marginTop: 28, alignItems: "center" }}>
+<Pressable
+  style={({ pressed }) => [
+    styles.nextButton,
+    pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
+  ]}
+  onPress={() => navigation.navigate("FamiliaS")} // ✅ ruta corregida
+>
+  <Text style={styles.nextButtonText}>Ir a Familias S y T ➝</Text>
+</Pressable>
+      </View>
     </ScrollView>
   );
 }
 
-const RED = "#B32133";   // parecido al de tu UI
-const GOLD = "#E7A725";  // dorado de actividades
+const RED = "#B32133";
+const GOLD = "#E7A725";
 const FRAME = "#0C0C0C";
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF", paddingHorizontal: 16 },
 
-  h1: {
-    fontSize: 22,
-    fontWeight: "900",
-    marginTop: 18,
-    marginBottom: 12,
-  },
+  h1: { fontSize: 22, fontWeight: "900", marginTop: 18, marginBottom: 12 },
 
   grid: {
     flexDirection: "row",
@@ -164,15 +175,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // columna = caja + label debajo
-  tileCol: {
-    width: "31%", // 3 por fila con espacio
-    alignItems: "center",
-  },
+  tileCol: { width: "31%", alignItems: "center" },
 
   tileBox: {
     width: "100%",
-    aspectRatio: 1, // cuadrado
+    aspectRatio: 1,
     borderRadius: 18,
     padding: 12,
     justifyContent: "center",
@@ -183,10 +190,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  tileRed:  { backgroundColor: RED },
+  tileRed: { backgroundColor: RED },
   tileGold: { backgroundColor: GOLD },
 
-  // marco negro alrededor del icono (como en tu captura)
   innerFrame: {
     width: "86%",
     aspectRatio: 1,
@@ -198,19 +204,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.03)",
   },
 
-  tileLabel: {
-    marginTop: 8,
-    fontWeight: "800",
-    color: "#1F2937",
-  },
+  tileLabel: { marginTop: 8, fontWeight: "800", color: "#1F2937" },
 
-  infoCard: {
-    marginTop: 18,
-    borderRadius: 12,
-    backgroundColor: "#F0F2F4",
-    padding: 16,
-  },
+  infoCard: { marginTop: 18, borderRadius: 12, backgroundColor: "#F0F2F4", padding: 16 },
   infoText: { color: "#374151", textAlign: "center", fontWeight: "700" },
 
   pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
+
+  nextButton: {
+    backgroundColor: RED,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+  },
+  nextButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 18,
+  },
 });

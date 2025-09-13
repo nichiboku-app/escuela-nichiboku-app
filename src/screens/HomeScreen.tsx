@@ -4,9 +4,10 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Asset } from "expo-asset";
 import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   Image,
   ImageBackground,
@@ -70,6 +71,47 @@ export default function HomeScreen(): React.JSX.Element {
   // Estado del video de introducción
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
+
+  // =============================
+  // Animaciones de aparición (fade + slide up)
+  // =============================
+  const aProgress = useRef(new Animated.Value(0)).current;
+  const aPanel = useRef(new Animated.Value(0)).current;
+  const aCard1 = useRef(new Animated.Value(0)).current; // N5
+  const aCard2 = useRef(new Animated.Value(0)).current; // N4
+  const aCard3 = useRef(new Animated.Value(0)).current; // N3 (wide)
+
+  const fadeUpStyle = useCallback(
+    (val: Animated.Value, fromY = 18) => ({
+      opacity: val,
+      transform: [
+        {
+          translateY: val.interpolate({
+            inputRange: [0, 1],
+            outputRange: [fromY, 0],
+          }),
+        },
+      ],
+    }),
+    []
+  );
+
+  const runAppear = useCallback(() => {
+    // Secuencia: Progreso -> Panel -> Stagger cards
+    Animated.sequence([
+      Animated.timing(aProgress, { toValue: 1, duration: 280, useNativeDriver: true }),
+      Animated.timing(aPanel, { toValue: 1, duration: 280, useNativeDriver: true }),
+      Animated.stagger(120, [
+        Animated.timing(aCard1, { toValue: 1, duration: 260, useNativeDriver: true }),
+        Animated.timing(aCard2, { toValue: 1, duration: 260, useNativeDriver: true }),
+        Animated.timing(aCard3, { toValue: 1, duration: 260, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, [aProgress, aPanel, aCard1, aCard2, aCard3]);
+
+  useEffect(() => {
+    if (ready) runAppear();
+  }, [ready, runAppear]);
 
   useEffect(() => {
     async function preloadImages() {
@@ -176,7 +218,7 @@ export default function HomeScreen(): React.JSX.Element {
   if (!ready) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color="#1a1818ff" />
+        <ActivityIndicator size="large" color="#7E0D18" />
       </View>
     );
   }
@@ -209,8 +251,8 @@ export default function HomeScreen(): React.JSX.Element {
             </TouchableOpacity>
           </View>
 
-          {/* Card Progreso */}
-          <View style={styles.progressCard}>
+          {/* Card Progreso (animada) */}
+          <Animated.View style={[styles.progressCard, fadeUpStyle(aProgress)]}>
             <Image
               source={require("../../assets/images/cloud_swirl.webp")}
               style={styles.cloudDecor}
@@ -240,10 +282,10 @@ export default function HomeScreen(): React.JSX.Element {
             <TouchableOpacity style={styles.progressBtn} onPress={() => go("ProgresoN5")} activeOpacity={0.9}>
               <Text style={styles.progressBtnText}>Ver progreso N5</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
 
-          {/* Panel Notas / Calendario */}
-          <View style={styles.panelWrap}>
+          {/* Panel Notas / Calendario (animado) */}
+          <Animated.View style={[styles.panelWrap, fadeUpStyle(aPanel)]}>
             <ImageBackground
               source={require("../../assets/images/cuadroNotas.webp")}
               style={styles.panelBg}
@@ -261,34 +303,42 @@ export default function HomeScreen(): React.JSX.Element {
                 </TouchableOpacity>
               </View>
             </ImageBackground>
-          </View>
+          </Animated.View>
 
-          {/* Tarjetas de cursos */}
+          {/* Tarjetas de cursos (stagger) */}
           <View style={styles.cardsGrid}>
-            <CourseCard
-              from="#6b0213"
-              to="#b46b72"
-              title="Tanuki: Nivel N5"
-              minutes="50 minutos"
-              image={require("../../assets/images/cursos/n5_mapache.webp")}
-              onPress={() => go("BienvenidaCursoN5")}
-            />
-            <CourseCard
-              from="#4e000e"
-              to="#b46b72"
-              title="Kitsune: Nivel N4"
-              minutes="50 minutos"
-              image={require("../../assets/images/cursos/n4_zorro.webp")}
-              onPress={() => go("CursoN4")}
-            />
-            <CourseWide
-              from="#914961"
-              to="#b46b72"
-              title="Ryū: Nivel N3"
-              minutes="50 minutos"
-              image={require("../../assets/images/cursos/n3_leon.webp")}
-              onPress={() => go("CursoN3")}
-            />
+            <Animated.View style={[fadeUpStyle(aCard1, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
+              <CourseCard
+                from="#8B0F1D"
+                to="#C05360"
+                title="Tanuki: Nivel N5"
+                minutes="50 minutos"
+                image={require("../../assets/images/cursos/n5_mapache.webp")}
+                onPress={() => go("BienvenidaCursoN5")}
+              />
+            </Animated.View>
+
+            <Animated.View style={[fadeUpStyle(aCard2, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
+              <CourseCard
+                from="#7A0C19"
+                to="#C05360"
+                title="Kitsune: Nivel N4"
+                minutes="50 minutos"
+                image={require("../../assets/images/cursos/n4_zorro.webp")}
+                onPress={() => go("CursoN4")}
+              />
+            </Animated.View>
+
+            <Animated.View style={[fadeUpStyle(aCard3, 24), { width: "100%" }]}>
+              <CourseWide
+                from="#A23B4E"
+                to="#C05360"
+                title="Ryū: Nivel N3"
+                minutes="50 minutos"
+                image={require("../../assets/images/cursos/n3_leon.webp")}
+                onPress={() => go("CursoN3")}
+              />
+            </Animated.View>
           </View>
 
           <View style={{ height: 120 }} />
@@ -400,10 +450,11 @@ const styles = StyleSheet.create({
   },
   hamburger: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
   hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
-  headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800" },
+  headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800", color: "#5C0A14" },
 
+  // ==== Tarjeta Progreso - rojos reforzados ====
   progressCard: {
-    backgroundColor: "#6b0213",
+    backgroundColor: "#7E0D18", // rojo profundo
     marginHorizontal: 16,
     marginTop: 12,
     borderRadius: 18,
@@ -411,7 +462,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
-  cloudDecor: { position: "absolute", right: 14, top: 10, width: 90, height: 60, opacity: 1 },
+  cloudDecor: { position: "absolute", right: 14, top: 10, width: 90, height: 60, opacity: 0.9 },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 12 },
 
   levelCircle: {
@@ -422,26 +473,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  levelIcon: {
-    width: 64,
-    height: 64,
-  },
+  levelIcon: { width: 64, height: 64 },
 
   progressTextCol: { flex: 1, paddingRight: 60 },
   progressTitle: { color: "#fff", fontSize: 16, fontWeight: "800", lineHeight: 24 },
   dotsRow: { flexDirection: "row", gap: 6, marginTop: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.5)" },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.55)" },
   dotActive: { backgroundColor: "#fff" },
   progressBtn: {
-    backgroundColor: "#f7f7f7",
+    backgroundColor: "#FFF3F3",
     alignSelf: "center",
     marginTop: 12,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
-  progressBtnText: { fontWeight: "800" },
+  progressBtnText: { fontWeight: "800", color: "#7E0D18" },
 
+  // Panel Notas / Calendario
   panelWrap: { marginTop: 12, paddingHorizontal: 16 },
   panelBg: { height: 118, justifyContent: "center", paddingHorizontal: 18 },
   panelBgImage: { resizeMode: "stretch", borderRadius: 14 },
@@ -450,7 +499,7 @@ const styles = StyleSheet.create({
     width: "42%",
     height: 44,
     borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.94)",
+    backgroundColor: "rgba(255,255,255,0.96)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -463,8 +512,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   actionIcon: { width: 26, height: 26, resizeMode: "contain" },
-  actionText: { fontWeight: "800", fontSize: 16, color: "#5a0d12" },
+  actionText: { fontWeight: "800", fontSize: 16, color: "#6B0F17" },
 
+  // Cards niveles (rojos y gradientes)
   cardsGrid: {
     marginTop: 16,
     paddingHorizontal: 16,
@@ -474,7 +524,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   card: {
-    width: (width - 16 * 2 - 12) / 2,
     borderRadius: 18,
     padding: 12,
     overflow: "hidden",
@@ -497,6 +546,7 @@ const styles = StyleSheet.create({
   wideIcon: { width: 105, height: 105, resizeMode: "contain" },
   wideTitle: { color: "#fff", fontWeight: "800", fontSize: 16, marginBottom: 6 },
 
+  // Barra inferior (más oscura con tinte rojo)
   bottomBarFixed: {
     position: "absolute",
     left: 0,
@@ -512,10 +562,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
-    backgroundColor: "#000",
+    backgroundColor: "rgba(30, 8, 10, 0.95)",
     paddingHorizontal: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,

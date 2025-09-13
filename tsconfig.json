@@ -1,7 +1,7 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-       "resolveJsonModule": true,
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "strict": true,
     "paths": {
@@ -13,6 +13,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "src/screens/OnboardingScreen.tsx"
+    "src/screens/OnboardingScreen.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ]
 }

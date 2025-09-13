@@ -1,50 +1,78 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
-import { Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import type { RootStackParamList } from './types';
+import "react-native-gesture-handler"; // 👈 Debe ir primero
+
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import React from "react";
+import { Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import type { RootStackParamList } from "./types";
 
 // Screens raíz
-import BienvenidaScreen from './src/screens/BienvenidaScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import OnboardingScreen from './src/screens/OnboardingScreen';
-import SplashScreen from './src/screens/SplashScreen';
+import BienvenidaScreen from "./src/screens/BienvenidaScreen";
+import LoginScreen from "./src/screens/LoginScreen";
+import OnboardingScreen from "./src/screens/OnboardingScreen";
+import SplashScreen from "./src/screens/SplashScreen";
 
 // Drawer principal
-import AppDrawerNavigator from './src/navigation/AppDrawerNavigator';
+import AppDrawerNavigator from "./src/navigation/AppDrawerNavigator";
 
 // N5 (rutas fuera del Drawer)
-import EntradaActividadesN5Screen from './src/screens/EntradaActividadesN5Screen';
-import IntroJaponesScreen from './src/screens/IntroJaponesScreen';
-import N5Bienvenida from './src/screens/N5/Bienvenida';
-import CulturaScreen from './src/screens/N5/CulturaScreen';
-import EjemplosGrupoA from './src/screens/N5/EjemplosGrupoA';
-import EscrituraScreen from './src/screens/N5/EscrituraScreen';
-import GifSaludo from './src/screens/N5/GifSaludo';
-import HiraganaScreen from './src/screens/N5/HiraganaScreen';
-import OrigenesDelIdiomaScreen from './src/screens/N5/OrigenesDelIdiomaScreen';
-import QuizCultural from './src/screens/N5/QuizCultural';
-import SubtemaScreen from './src/screens/N5/SubtemaScreen';
-import TemaN5 from './src/screens/N5/TemaN5';
-import VowelExercisesScreen from './src/screens/VowelExercisesScreen';
+import EntradaActividadesN5Screen from "./src/screens/EntradaActividadesN5Screen";
+import IntroJaponesScreen from "./src/screens/IntroJaponesScreen";
+import AtarjetasScreen from "./src/screens/N5/AtarjetasScreen";
+import ATrazoAnimado from "./src/screens/N5/ATrazoAnimado";
+import N5Bienvenida from "./src/screens/N5/Bienvenida";
+import CulturaScreen from "./src/screens/N5/CulturaScreen";
+import EjemplosGrupoA from "./src/screens/N5/EjemplosGrupoA";
+import EscrituraScreen from "./src/screens/N5/EscrituraScreen";
+import GifSaludo from "./src/screens/N5/GifSaludo";
+import HiraganaScreen from "./src/screens/N5/HiraganaScreen";
+import MatchingGrupoK from "./src/screens/N5/MatchingGrupoK";
+import MemoriaGrupoK from "./src/screens/N5/MemoriaGrupoK";
+import OrigenesDelIdiomaScreen from "./src/screens/N5/OrigenesDelIdiomaScreen";
+import QuizCultural from "./src/screens/N5/QuizCultural";
+import SubtemaScreen from "./src/screens/N5/SubtemaScreen";
+import TemaN5 from "./src/screens/N5/TemaN5";
+import VocabularioGrupoK from "./src/screens/N5/VocabularioGrupoK";
+import VowelExercisesScreen from "./src/screens/VowelExercisesScreen";
 
+// ✅ NUEVA RUTA (Dictado Visual con TTS)
+import ADictadoVisual from "./src/screens/N5/ADictadoVisual";
 
 // Modal de video N5
-import VideoIntroModal from './src/screens/N5/VideoIntroModal';
+import VideoIntroModal from "./src/screens/N5/VideoIntroModal";
 
-// ✅ Pantallas reales
-import PronunciacionGrupoA from './src/screens/N5/PronunciacionGrupoA';
-import TrazosGrupoA from './src/screens/N5/TrazosGrupoA';
+// ✅ Pantallas reales (Grupo A)
+import PronunciacionGrupoA from "./src/screens/N5/PronunciacionGrupoA";
+import TrazosGrupoA from "./src/screens/N5/TrazosGrupoA";
+
+// ✅ Grupo K real
+import TrazosGrupoK from "./src/screens/N5/TrazosGrupoK";
+
+// ✅ Familias S/T: menú combinado + trazos S/Z
+import FamiliaSScreen from "./src/screens/N5/FamiliaS/SEscrituraGrupoS";
+import TrazosFamiliaSZ from "./src/screens/N5/FamiliaS/TrazosFamiliaSZ";
+
+// ✅ Familia S: pantallas auxiliares
+import SCaligrafiaDigital from "./src/screens/N5/FamiliaS/SCaligrafiaDigital";
+import SEjemplosGrupoS from "./src/screens/N5/FamiliaS/SEjemplosGrupoS";
+import SLecturaSilabas from "./src/screens/N5/FamiliaS/SLecturaSilabas";
+
+// ✅ Familia T: pantallas auxiliares
+import TQuizEscucha from "./src/screens/N5/FamiliaS/TQuizEscucha";
+import TTrazoGif from "./src/screens/N5/FamiliaS/TTrazoGif";
+//familia N
+import FamiliaNHScreen from "./src/screens/N5/FamiliaN/FamiliaNHScreen";
+import HRoleplaySaludoScreen from "./src/screens/N5/FamiliaN/HRoleplaySaludoScreen";
+import NLecturaGuiadaScreen from "./src/screens/N5/FamiliaN/NLecturaGuiadaScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Helpers: Placeholders mientras implementamos pantallas nuevas
 function Placeholder({ title }: { title: string }) {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <Text style={{ fontSize: 22, fontWeight: '900', marginBottom: 8 }}>{title}</Text>
-      <Text style={{ opacity: 0.7, textAlign: 'center' }}>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <Text style={{ fontSize: 22, fontWeight: "900", marginBottom: 8 }}>{title}</Text>
+      <Text style={{ opacity: 0.7, textAlign: "center" }}>
         Pantalla aún no implementada. Crea {title}.tsx en /src/screens/N5/ y actualiza App.tsx.
       </Text>
     </View>
@@ -59,21 +87,21 @@ export default function App() {
           initialRouteName="Splash"
           screenOptions={{
             headerShown: false,
-            animation: 'simple_push',
+            animation: "simple_push",
             gestureEnabled: true,
             freezeOnBlur: true,
           }}
         >
-          {/* Arranque */}
+          {/* === Arranque === */}
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
 
-          {/* Drawer principal */}
+          {/* === Drawer principal === */}
           <Stack.Screen name="Home" component={AppDrawerNavigator} />
 
-          {/* N5 fuera del Drawer */}
+          {/* === N5 fuera del Drawer === */}
           <Stack.Screen name="N5Bienvenida" component={N5Bienvenida} />
           <Stack.Screen name="EntradaActividadesN5" component={EntradaActividadesN5Screen} />
           <Stack.Screen name="IntroJapones" component={IntroJaponesScreen} />
@@ -81,17 +109,17 @@ export default function App() {
           <Stack.Screen
             name="OrigenesDelIdioma"
             component={OrigenesDelIdiomaScreen}
-            options={{ headerShown: true, title: 'Orígenes del idioma' }}
+            options={{ headerShown: true, title: "Orígenes del idioma" }}
           />
           <Stack.Screen
             name="EscrituraN5"
             component={EscrituraScreen}
-            options={{ headerShown: true, title: 'Sistemas de escritura' }}
+            options={{ headerShown: true, title: "Sistemas de escritura" }}
           />
           <Stack.Screen
             name="CulturaN5"
             component={CulturaScreen}
-            options={{ headerShown: true, title: 'Cultura básica' }}
+            options={{ headerShown: true, title: "Cultura básica" }}
           />
           <Stack.Screen name="Subtema" component={SubtemaScreen} options={{ headerShown: false }} />
           <Stack.Screen
@@ -99,93 +127,163 @@ export default function App() {
             component={TemaN5}
             options={({ route }) => ({
               headerShown: true,
-              title: (route?.params as any)?.title ?? 'Hiragana',
+              title: (route?.params as any)?.title ?? "Hiragana",
             })}
           />
+          <Stack.Screen name="Hiragana" component={HiraganaScreen} options={{ headerShown: false }} />
+
           <Stack.Screen
-            name="Hiragana"
-            component={HiraganaScreen}
+            name="EjemplosGrupoA"
+            component={EjemplosGrupoA}
+            options={{ headerShown: true, title: "Ejemplos — Grupo A" }}
+          />
+
+          {/* === Vocabulario K (REAL, ÚNICO) === */}
+          <Stack.Screen
+            name="VocabularioGrupoK"
+            component={VocabularioGrupoK}
+            options={{ headerShown: true, title: "Vocabulario — Grupo K" }}
+          />
+
+          {/* === Flashcards educativas === */}
+          <Stack.Screen
+            name="ATarjetas"
+            component={AtarjetasScreen}
             options={{ headerShown: false }}
           />
 
-          <Stack.Screen name="GifSaludo" component={GifSaludo} options={{ headerShown: true, title: 'Saludos (GIF)' }} />
+          {/* === Matching K REAL === */}
+          <Stack.Screen
+            name="MatchingGrupoK"
+            component={MatchingGrupoK}
+            options={{ headerShown: true, title: "Matching — Grupo K" }}
+          />
+
+          {/* === Otros N5 === */}
+          <Stack.Screen
+            name="GifSaludo"
+            component={GifSaludo}
+            options={{ headerShown: true, title: "Saludos (GIF)" }}
+          />
           <Stack.Screen
             name="VowelExercises"
             component={VowelExercisesScreen}
-            options={{ headerShown: true, title: 'Ejercicios vocales' }}
+            options={{ headerShown: true, title: "Ejercicios vocales" }}
           />
           <Stack.Screen
             name="QuizCultural"
             component={QuizCultural}
-            options={{ headerShown: true, title: 'Quiz cultural' }}
+            options={{ headerShown: true, title: "Quiz cultural" }}
           />
           <Stack.Screen
             name="VideoIntroModal"
             component={VideoIntroModal}
             options={{
               headerShown: false,
-              presentation: 'fullScreenModal',
-              animation: 'fade',
-              contentStyle: { backgroundColor: '#000' },
+              presentation: "fullScreenModal",
+              animation: "fade",
+              contentStyle: { backgroundColor: "#000" },
             }}
           />
 
-          {/* === RUTAS HIRAGANA === */}
-          {/* 👉 TrazosGrupoA y PronunciacionGrupoA usan pantallas reales */}
+          {/* === HIRAGANA — GRUPO A === */}
           <Stack.Screen
             name="TrazosGrupoA"
             component={TrazosGrupoA}
-            options={{ headerShown: true, title: 'Trazos — Grupo A' }}
+            options={{ headerShown: true, title: "Trazos — Grupo A" }}
           />
           <Stack.Screen
             name="PronunciacionGrupoA"
             component={PronunciacionGrupoA}
-            options={{ headerShown: true, title: 'Pronunciación — Grupo A' }}
+            options={{ headerShown: true, title: "Pronunciación — Grupo A" }}
           />
 
-          {/* Estas quedan como placeholders por ahora */}
-         <Stack.Screen
-  name="EjemplosGrupoA"
-  component={EjemplosGrupoA}
-  options={{ headerShown: true, title: 'Ejemplos — Grupo A' }}
-/>
+          {/* === Implementadas === */}
+          <Stack.Screen
+            name="ATrazoAnimado"
+            component={ATrazoAnimado}
+            options={{ headerShown: true, title: "Trazo animado" }}
+          />
 
+          {/* === Dictado visual (REAL) === */}
+          <Stack.Screen
+            name="ADictadoVisual"
+            component={ADictadoVisual}
+            options={{ headerShown: false }}
+          />
+
+          {/* === Placeholders varios === */}
           <Stack.Screen
             name="TarjetasGrupoA"
-            options={{ headerShown: true, title: 'Tarjetas — Grupo A' }}
+            options={{ headerShown: true, title: "Tarjetas — Grupo A" }}
             children={() => <Placeholder title="TarjetasGrupoA" />}
           />
           <Stack.Screen
             name="TrazoAnimadoGrupoA"
-            options={{ headerShown: true, title: 'Trazo animado — Grupo A' }}
+            options={{ headerShown: true, title: "Trazo animado — Grupo A" }}
             children={() => <Placeholder title="TrazoAnimadoGrupoA" />}
           />
-          <Stack.Screen
-            name="DictadoVisualGrupoA"
-            options={{ headerShown: true, title: 'Dictado visual — Grupo A' }}
-            children={() => <Placeholder title="DictadoVisualGrupoA" />}
-          />
 
+          {/* === Grupo K === */}
           <Stack.Screen
             name="TrazoGrupoK"
-            options={{ headerShown: true, title: 'Trazo — Grupo K' }}
-            children={() => <Placeholder title="TrazoGrupoK" />}
-          />
-          <Stack.Screen
-            name="VocabularioGrupoK"
-            options={{ headerShown: true, title: 'Vocabulario — Grupo K' }}
-            children={() => <Placeholder title="VocabularioGrupoK" />}
-          />
-          <Stack.Screen
-            name="MatchingGrupoK"
-            options={{ headerShown: true, title: 'Matching — Grupo K' }}
-            children={() => <Placeholder title="MatchingGrupoK" />}
+            component={TrazosGrupoK}
+            options={{ headerShown: true, title: "Trazo — Grupo K" }}
           />
           <Stack.Screen
             name="MemoriaGrupoK"
-            options={{ headerShown: true, title: 'Memoria — Grupo K' }}
-            children={() => <Placeholder title="MemoriaGrupoK" />}
+            component={MemoriaGrupoK}
+            options={{ headerShown: false }}
           />
+
+          {/* === Familias S/T === */}
+          <Stack.Screen name="FamiliaS" component={FamiliaSScreen} />
+          <Stack.Screen
+            name="SEscrituraGrupoS"
+            component={TrazosFamiliaSZ}
+            options={{ headerShown: true, title: "Escritura (S)" }}
+          />
+          <Stack.Screen
+            name="SEjemplosGrupoS"
+            component={SEjemplosGrupoS}
+            options={{ headerShown: true, title: "Ejemplos (S)" }}
+          />
+          <Stack.Screen
+            name="SCaligrafiaDigital"
+            component={SCaligrafiaDigital}
+            options={{ headerShown: true, title: "Caligrafía digital (S)" }}
+          />
+          <Stack.Screen
+            name="SLecturaSilabas"
+            component={SLecturaSilabas}
+            options={{ headerShown: true, title: "Lectura de sílabas (S)" }}
+          />
+          <Stack.Screen
+            name="TTrazoGif"
+            component={TTrazoGif}
+            options={{ headerShown: true, title: "Trazo (T)" }}
+          />
+          <Stack.Screen
+            name="TQuizEscucha"
+            component={TQuizEscucha}
+            options={{ headerShown: true, title: "Quiz de escucha (T)" }}
+          />
+          <Stack.Screen
+  name="FamiliaNH"
+  component={FamiliaNHScreen}
+  options={{ title: "Familias N y H" }}
+/>
+<Stack.Screen
+  name="NLecturaGuiada"
+  component={NLecturaGuiadaScreen}
+  options={{ title: "Lectura guiada (N)" }}
+/>
+<Stack.Screen
+  name="HRoleplaySaludo"
+  component={HRoleplaySaludoScreen}
+  options={{ title: "Roleplay: me llamo..." }}
+/>
+
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>

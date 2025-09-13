@@ -1,18 +1,16 @@
-import { Asset } from "expo-asset";
-import { Audio } from "expo-av";
-import * as Speech from "expo-speech";
+// src/screens/N5/EjemplosGrupoA.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    Vibration,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  Vibration,
+  View,
 } from "react-native";
+import { useFeedbackSounds } from "../../hooks/useFeedbackSounds";
 
-// ====== Tipos ======
 type Kana = "a" | "i" | "u" | "e" | "o";
 type ExampleItem = {
   id: string;
@@ -20,209 +18,157 @@ type ExampleItem = {
   jp: string;
   romaji: string;
   es: string;
-  audioKey?: string;   // clave para LOCAL_WORD_RES
-  audioUri?: string;   // alternativo: URL remota (no usada aquí)
 };
 
-// ====== Datos ======
 const ALL_EXAMPLES: ExampleItem[] = [
-  // a
-  { id: "a_ame", kana: "a", jp: "あめ", romaji: "ame", es: "lluvia", audioKey: "a_ame" },
-  { id: "a_asa", kana: "a", jp: "あさ", romaji: "asa", es: "mañana", audioKey: "a_asa" },
-  { id: "a_ai",  kana: "a", jp: "あい", romaji: "ai",  es: "amor",   audioKey: "a_ai"  },
-  // i
-  { id: "i_inu", kana: "i", jp: "いぬ", romaji: "inu", es: "perro", audioKey: "i_inu" },
-  { id: "i_ie",  kana: "i", jp: "いえ", romaji: "ie",  es: "casa",  audioKey: "i_ie"  },
-  { id: "i_isu", kana: "i", jp: "いす", romaji: "isu", es: "silla", audioKey: "i_isu" },
-  // u
-  { id: "u_umi", kana: "u", jp: "うみ", romaji: "umi", es: "mar",   audioKey: "u_umi" },
-  { id: "u_ushi",kana: "u", jp: "うし", romaji: "ushi",es: "vaca",  audioKey: "u_ushi" },
-  { id: "u_uta", kana: "u", jp: "うた", romaji: "uta", es: "canción", audioKey: "u_uta" },
-  // e
-  { id: "e_eki", kana: "e", jp: "えき", romaji: "eki", es: "estación", audioKey: "e_eki" },
-  { id: "e_enpitsu", kana: "e", jp: "えんぴつ", romaji: "enpitsu", es: "lápiz", audioKey: "e_enpitsu" },
-  { id: "e_e",   kana: "e", jp: "え",   romaji: "e",   es: "dibujo", audioKey: "e_e" },
-  // o
-  { id: "o_ocha", kana: "o", jp: "おちゃ", romaji: "ocha", es: "té", audioKey: "o_ocha" },
-  { id: "o_onigiri", kana: "o", jp: "おにぎり", romaji: "onigiri", es: "bolita de arroz", audioKey: "o_onigiri" },
-  { id: "o_okane", kana: "o", jp: "おかね", romaji: "okane", es: "dinero", audioKey: "o_okane" },
+  { id: "a_ame", kana: "a", jp: "あめ", romaji: "ame", es: "lluvia" },
+  { id: "a_asa", kana: "a", jp: "あさ", romaji: "asa", es: "mañana" },
+  { id: "a_ai",  kana: "a", jp: "あい", romaji: "ai",  es: "amor" },
+  { id: "i_inu", kana: "i", jp: "いぬ", romaji: "inu", es: "perro" },
+  { id: "i_ie",  kana: "i", jp: "いえ", romaji: "ie",  es: "casa" },
+  { id: "i_isu", kana: "i", jp: "いす", romaji: "isu", es: "silla" },
+  { id: "u_umi",  kana: "u", jp: "うみ",   romaji: "umi",  es: "mar" },
+  { id: "u_ushi", kana: "u", jp: "うし",   romaji: "ushi", es: "vaca" },
+  { id: "u_uta",  kana: "u", jp: "うた",   romaji: "uta",  es: "canción" },
+  { id: "e_eki",     kana: "e", jp: "えき",     romaji: "eki",     es: "estación" },
+  { id: "e_enpitsu", kana: "e", jp: "えんぴつ", romaji: "enpitsu", es: "lápiz" },
+  { id: "e_e",       kana: "e", jp: "え",       romaji: "e",       es: "dibujo" },
+  { id: "o_ocha",    kana: "o", jp: "おちゃ",   romaji: "ocha",    es: "té" },
+  { id: "o_onigiri", kana: "o", jp: "おにぎり", romaji: "onigiri", es: "bolita de arroz" },
+  { id: "o_okane",   kana: "o", jp: "おかね",   romaji: "okane",   es: "dinero" },
 ];
 
-// ====== MP3 locales (require estático) ======
-const LOCAL_WORD_RES: Record<string, number> = {
-  a_ame: require("../../../assets/audio/n5/grupoA/examples/a_ame.mp3"),
-  a_asa: require("../../../assets/audio/n5/grupoA/examples/a_asa.mp3"),
-  a_ai: require("../../../assets/audio/n5/grupoA/examples/a_ai.mp3"),
-  i_inu: require("../../../assets/audio/n5/grupoA/examples/i_inu.mp3"),
-  i_ie: require("../../../assets/audio/n5/grupoA/examples/i_ie.mp3"),
-  i_isu: require("../../../assets/audio/n5/grupoA/examples/i_isu.mp3"),
-  u_umi: require("../../../assets/audio/n5/grupoA/examples/u_umi.mp3"),
-  u_ushi: require("../../../assets/audio/n5/grupoA/examples/u_ushi.mp3"),
-  u_uta: require("../../../assets/audio/n5/grupoA/examples/u_uta.mp3"),
-  e_eki: require("../../../assets/audio/n5/grupoA/examples/e_eki.mp3"),
-  e_enpitsu: require("../../../assets/audio/n5/grupoA/examples/e_enpitsu.mp3"),
-  e_e: require("../../../assets/audio/n5/grupoA/examples/e_e.mp3"),
-  o_ocha: require("../../../assets/audio/n5/grupoA/examples/o_ocha.mp3"),
-  o_onigiri: require("../../../assets/audio/n5/grupoA/examples/o_onigiri.mp3"),
-  o_okane: require("../../../assets/audio/n5/grupoA/examples/o_okane.mp3"),
-};
-
-// ====== Audio mode helper ======
-async function ensurePlaybackMode() {
-  await Audio.setIsEnabledAsync(true);
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
+// ====== Utils ======
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function sampleIncorrectOptions(pool: ExampleItem[], correct: ExampleItem, count = 3): ExampleItem[] {
+  const others = pool.filter(x => x.id !== correct.id);
+  return shuffle(others).slice(0, count);
 }
 
+const RED   = "#B32133";
+const INK   = "#111827";
+const PAPER = "#faf7f0";
+
 export default function EjemplosGrupoA() {
+  const { playCorrect, playWrong, ready: sndReady } = useFeedbackSounds();
+
   const [filter, setFilter] = useState<Kana | "all">("all");
   const [showRomaji, setShowRomaji] = useState(true);
-  const [showES, setShowES] = useState(true);
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const data = useMemo(
+  // 🔒 bloqueo de tap para evitar dobles (especialmente en primer toque)
+  const tapLockRef = useRef(false);
+
+  const pool = useMemo(
     () => (filter === "all" ? ALL_EXAMPLES : ALL_EXAMPLES.filter(x => x.kana === filter)),
     [filter]
   );
 
-  // ====== Precarga REAL: crear Audio.Sound por cada ejemplo ======
-  const [ready, setReady] = useState(false);
-  const soundsRef = useRef<Record<string, Audio.Sound>>({});
-  const currentRef = useRef<Audio.Sound | null>(null);
-
+  const [order, setOrder] = useState<string[]>([]);
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await ensurePlaybackMode();
-        // Secuencial para evitar picos de IO
-        for (const [key, mod] of Object.entries(LOCAL_WORD_RES)) {
-          const asset = Asset.fromModule(mod);
-          await asset.downloadAsync();
-          const uri = asset.localUri || asset.uri;
-          const sound = new Audio.Sound();
-          await sound.loadAsync({ uri }, { shouldPlay: false, volume: 1.0 });
-          soundsRef.current[key] = sound;
-        }
-        if (!cancelled) setReady(true);
-        console.log("[PRELOAD] Ejemplos cargados:", Object.keys(soundsRef.current).length);
-      } catch (e) {
-        console.warn("[PRELOAD] error", e);
-        if (!cancelled) setReady(true); // dejamos pasar (habrá fallback TTS)
-      }
-    })();
+    setOrder(shuffle(pool.map(x => x.id)));
+    setRoundIndex(0);
+    setScore(0);
+    setSelected(null);
+    setIsFinished(false);
+    tapLockRef.current = false;
+  }, [pool]);
 
-    return () => {
-      cancelled = true;
-      // Descargar memoria al salir
-      const unloadAll = async () => {
-        await Promise.all(
-          Object.values(soundsRef.current).map(async (s) => {
-            try { await s.unloadAsync(); } catch {}
-          })
-        );
-        soundsRef.current = {};
-      };
-      unloadAll();
-    };
-  }, []);
+  const current: ExampleItem | null = useMemo(() => {
+    const id = order[roundIndex];
+    return pool.find(x => x.id === id) ?? null;
+  }, [order, roundIndex, pool]);
 
-  // ====== TTS (fallback) ======
-  const [jaVoiceId, setJaVoiceId] = useState<string | null>(null);
-  useEffect(() => {
-    (async () => {
-      try {
-        const voices = await Speech.getAvailableVoicesAsync();
-        const ja = voices.find(v => v.language?.toLowerCase().startsWith("ja"));
-        setJaVoiceId(ja?.identifier ?? null);
-      } catch {}
-    })();
-  }, []);
-  const speak = useCallback(async (text: string, slow = false) => {
-    try {
-      await ensurePlaybackMode();
-      Speech.stop();
-      Vibration.vibrate(6);
-      Speech.speak(text, {
-        language: "ja-JP",
-        voice: jaVoiceId ?? undefined,
-        rate: slow ? 0.7 : 1.0,
-        pitch: 1.0,
-      });
-    } catch {}
-  }, [jaVoiceId]);
+  const options = useMemo(() => {
+    if (!current) return [];
+    const incorrect = sampleIncorrectOptions(pool, current, Math.min(3, pool.length - 1));
+    return shuffle([current, ...incorrect]).map(opt => ({
+      id: opt.id,
+      label: opt.es,
+      correct: opt.id === current.id,
+    }));
+  }, [current, pool]);
 
-  // ====== Reproducir (instantáneo) ======
-  const stopCurrent = useCallback(async () => {
-    const cur = currentRef.current;
-    if (!cur) return;
-    try { await cur.stopAsync(); } catch {}
-    currentRef.current = null;
-  }, []);
+  const onPick = useCallback(async (optId: string) => {
+    if (!current) return;
+    if (selected) return;           // ya se escogió
+    if (tapLockRef.current) return; // evita carrera en primer tap
+    tapLockRef.current = true;
 
-  const playExample = useCallback(async (item: ExampleItem, slow = false) => {
-    // 1) si hay sound precargado, resetea y reproduce
-    if (item.audioKey) {
-      const s = soundsRef.current[item.audioKey];
-      if (s) {
-        await stopCurrent();
-        currentRef.current = s;
-        await s.setIsMutedAsync(false);
-        await s.setVolumeAsync(1.0);
-        await s.setPositionAsync(0);
-        await s.playAsync();
-        return;
-      }
+    setSelected(optId);
+    const isCorrect = optId === current.id;
+
+    // Feedback inmediato sin bloquear UI
+    if (isCorrect) {
+      setScore(s => s + 1);
+      Vibration.vibrate(12);
+      if (sndReady) { playCorrect().catch(() => {}); }
+    } else {
+      Vibration.vibrate([0, 30, 40, 30]);
+      if (sndReady) { playWrong().catch(() => {}); }
     }
-    // 2) fallback TTS
-    return speak(item.jp, slow);
-  }, [speak, stopCurrent]);
+  }, [current, selected, sndReady, playCorrect, playWrong]);
 
-  // UI
+  // Tras seleccionar, liberamos el lock en el próximo frame de UI
+  useEffect(() => {
+    if (selected == null) return;
+    const t = setTimeout(() => { tapLockRef.current = false; }, 0);
+    return () => clearTimeout(t);
+  }, [selected]);
+
+  const next = useCallback(() => {
+    if (roundIndex + 1 >= order.length) {
+      setIsFinished(true);
+    } else {
+      setRoundIndex(i => i + 1);
+      setSelected(null);
+    }
+  }, [roundIndex, order.length]);
+
+  const restart = useCallback(() => {
+    setOrder(shuffle(pool.map(x => x.id)));
+    setRoundIndex(0);
+    setScore(0);
+    setSelected(null);
+    setIsFinished(false);
+    tapLockRef.current = false;
+  }, [pool]);
+
   const Chip = ({ label, value }: { label: string; value: Kana | "all" }) => {
     const active = filter === value;
     return (
-      <Pressable onPress={() => setFilter(value)} style={[styles.chip, active && styles.chipActive]}>
+      <Pressable onPressIn={() => setFilter(value)} style={[styles.chip, active && styles.chipActive]}>
         <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
       </Pressable>
     );
   };
 
-  const renderItem = ({ item }: { item: ExampleItem }) => (
-    <View style={styles.card}>
-      <View style={{ alignItems: "center" }}>
-        <Text style={styles.jp}>{item.jp}</Text>
-        {showRomaji && <Text style={styles.romaji}>{item.romaji}</Text>}
-        {showES && <Text style={styles.es}>{item.es}</Text>}
+  if (!current) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={[styles.card, { alignItems: "center" }]} pointerEvents="none">
+          <ActivityIndicator />
+          <Text style={{ marginTop: 8, fontWeight: "700" }}>Preparando pregunta…</Text>
+        </View>
       </View>
-
-      <View style={styles.row}>
-        <Pressable
-          onPress={() => playExample(item, false)}
-          onLongPress={() => playExample(item, true)}
-          disabled={!ready}
-          style={({ pressed }) => [
-            styles.btn,
-            (!ready || pressed) && styles.btnPressed,
-          ]}
-        >
-          <Text style={styles.btnText}>
-            {ready ? "▶️ Escuchar\n(mantén: lento)" : "Cargando audio…"}
-          </Text>
-        </Pressable>
-      </View>
-    </View>
-  );
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Ejemplos — Grupo A</Text>
+      <Text style={styles.title}>Quiz de ejemplos — Grupo A</Text>
       <Text style={styles.subtitle}>
-        Toca para escuchar cada palabra (mantén para lento). Puedes ocultar/mostrar romaji y traducción.
+        Elige el significado correcto. {showRomaji ? "Romaji visible" : "Romaji oculto"}
       </Text>
 
       {/* Filtros */}
@@ -237,55 +183,96 @@ export default function EjemplosGrupoA() {
 
       {/* Toggles */}
       <View style={styles.toggles}>
-        <Pressable onPress={() => setShowRomaji(v => !v)} style={styles.toggleBtn}>
+        <Pressable onPressIn={() => setShowRomaji(v => !v)} style={styles.toggleBtn}>
           <Text style={styles.toggleText}>{showRomaji ? "Ocultar romaji" : "Mostrar romaji"}</Text>
         </Pressable>
-        <Pressable onPress={() => setShowES(v => !v)} style={styles.toggleBtn}>
-          <Text style={styles.toggleText}>{showES ? "Ocultar español" : "Mostrar español"}</Text>
-        </Pressable>
+        <View style={styles.scorePill}>
+          <Text style={styles.scoreText}>Puntaje: {score}/{order.length || 0}</Text>
+        </View>
       </View>
 
-      <FlatList
-        data={data}
-        keyExtractor={(it) => it.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-      />
+      {isFinished ? (
+        <View style={styles.card}>
+          <Text style={styles.doneTitle}>¡Completado!</Text>
+          <Text style={styles.doneText}>
+            Obtuviste <Text style={{ fontWeight: "900" }}>{score}</Text> de {order.length}.
+          </Text>
 
-      {/* Overlay de carga */}
-      {!ready && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" />
-            <Text style={{ marginTop: 8, fontWeight: "700" }}>Preparando audios…</Text>
-            <Text style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
-              Esto se hace una sola vez por pantalla.
-            </Text>
+          <Pressable onPressIn={restart} style={[styles.primaryBtn, { marginTop: 14 }]}>
+            <Text style={styles.primaryBtnText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.progress}>
+            Pregunta {Math.min(roundIndex + 1, order.length || 1)} / {order.length || 1}
+          </Text>
+          <View style={{ alignItems: "center", marginTop: 6 }}>
+            <Text style={styles.jp}>{current.jp}</Text>
+            {showRomaji && <Text style={styles.romaji}>{current.romaji}</Text>}
           </View>
+
+          <FlatList
+            data={options}
+            keyExtractor={it => it.id}
+            contentContainerStyle={{ gap: 10, paddingTop: 12 }}
+            renderItem={({ item }) => {
+              const hasPicked = selected != null;
+              const isPicked = selected === item.id;
+              const isRight = item.correct;
+              const stateStyle =
+                hasPicked && (isRight ? styles.optCorrect : isPicked ? styles.optWrong : styles.optIdleAfter);
+              return (
+                <Pressable
+                  disabled={hasPicked}
+                  onPressIn={() => onPick(item.id)}   // ✅ dispara en cuanto toca
+                  hitSlop={12}
+                  style={({ pressed }) => [
+                    styles.opt,
+                    pressed && !hasPicked && styles.optPressed,
+                    stateStyle,
+                  ]}
+                >
+                  <Text style={styles.optText}>{item.label}</Text>
+                </Pressable>
+              );
+            }}
+          />
+
+          <Pressable
+            onPressIn={next}
+            disabled={selected == null}
+            style={[
+              styles.primaryBtn,
+              { marginTop: 12, opacity: selected == null ? 0.5 : 1 },
+            ]}
+          >
+            <Text style={styles.primaryBtnText}>
+              {roundIndex + 1 >= order.length ? "Terminar" : "Siguiente"}
+            </Text>
+          </Pressable>
         </View>
       )}
     </View>
   );
 }
 
-// ====== Estilos ======
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#faf7f0", paddingHorizontal: 16, paddingTop: 12 },
+  container: { flex: 1, backgroundColor: PAPER, paddingHorizontal: 16, paddingTop: 12 },
   title: { fontSize: 22, fontWeight: "800", textAlign: "center" },
   subtitle: { textAlign: "center", fontSize: 12, color: "#555", marginTop: 6, marginBottom: 10 },
 
   filters: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 6 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: "#e5e7eb" },
-  chipActive: { backgroundColor: "#111827" },
-  chipText: { color: "#111827", fontWeight: "700" },
+  chipActive: { backgroundColor: INK },
+  chipText: { color: INK, fontWeight: "700" },
   chipTextActive: { color: "#fff" },
 
   toggles: { flexDirection: "row", justifyContent: "center", gap: 10, marginBottom: 8 },
-  toggleBtn: { backgroundColor: "#111827", borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12 },
+  toggleBtn: { backgroundColor: INK, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12 },
   toggleText: { color: "#fff", fontWeight: "700", fontSize: 12 },
-
-  listContent: { paddingBottom: 16 },
+  scorePill: { backgroundColor: "#f3f4f6", borderRadius: 999, paddingVertical: 8, paddingHorizontal: 12 },
+  scoreText: { fontWeight: "800", color: "#374151" },
 
   card: {
     backgroundColor: "#fff",
@@ -297,34 +284,24 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
+    marginTop: 10,
   },
 
-  jp: { fontSize: 32, lineHeight: 40 },
+  progress: { fontSize: 12, color: "#6b7280", fontWeight: "700" },
+  jp: { fontSize: 36, lineHeight: 44 },
   romaji: { fontSize: 14, color: "#666", marginTop: 2 },
-  es: { fontSize: 13, color: "#333", marginTop: 2 },
 
-  row: { flexDirection: "row", justifyContent: "center", columnGap: 10, marginTop: 12 },
-  btn: { backgroundColor: "#111827", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, minWidth: 160 },
-  btnPressed: { opacity: 0.7, transform: [{ scale: 0.99 }] },
-  btnText: { color: "#fff", textAlign: "center", fontWeight: "600" },
+  opt: { backgroundColor: "#111827", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14 },
+  optText: { color: "#fff", textAlign: "center", fontWeight: "800" },
+  optPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
 
-  // Overlay de carga
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingCard: {
-    backgroundColor: "#fff",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
+  optCorrect: { backgroundColor: "#059669" },
+  optWrong: { backgroundColor: "#DC2626" },
+  optIdleAfter: { backgroundColor: "#374151" },
+
+  doneTitle: { fontSize: 20, fontWeight: "900", textAlign: "center" },
+  doneText: { textAlign: "center", marginTop: 6, color: "#374151" },
+
+  primaryBtn: { backgroundColor: RED, borderRadius: 12, paddingVertical: 12, alignItems: "center" },
+  primaryBtnText: { color: "#fff", fontWeight: "900" },
 });
