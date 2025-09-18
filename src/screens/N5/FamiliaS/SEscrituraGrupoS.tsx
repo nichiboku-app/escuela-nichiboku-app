@@ -16,9 +16,13 @@ function OptionButton({
   title: string;
   subtitle?: string;
   onPress: () => void;
-  variant?: "red" | "gold";
+  variant?: "red" | "gold" | "black";
 }) {
-  const bg = variant === "red" ? styles.cardRed : styles.cardGold;
+  let bg;
+  if (variant === "red") bg = styles.cardRed;
+  else if (variant === "gold") bg = styles.cardGold;
+  else bg = styles.cardBlack;
+
   return (
     <Pressable
       onPress={onPress}
@@ -116,8 +120,19 @@ export default function FamiliaSScreen() {
         <OptionButton
           title="Familias N y H →"
           subtitle="Lectura guiada + Roleplay は"
-          onPress={() => go("FamiliaNH")}   // Asegura registrar esta ruta en tu navigator
+          onPress={() => go("FamiliaNH")}
           variant="red"
+        />
+      </View>
+
+      {/* ======= Nuevo botón negro: Hiragana M ======= */}
+      <Text style={[styles.h2, { marginTop: 28 }]}>Próxima unidad</Text>
+      <View style={styles.grid}>
+        <OptionButton
+          title="Hiragana M (まみむめも) →"
+          subtitle="Dictado + práctica con voz"
+          onPress={() => go("HiraganaMMenu")}
+          variant="black"
         />
       </View>
     </ScrollView>
@@ -126,6 +141,7 @@ export default function FamiliaSScreen() {
 
 const RED = "#B32133";
 const GOLD = "#E7A725";
+const BLACK = "#111827";
 const FRAME = "#0C0C0C";
 
 const styles = StyleSheet.create({
@@ -164,6 +180,7 @@ const styles = StyleSheet.create({
   },
   cardRed: { backgroundColor: RED },
   cardGold: { backgroundColor: GOLD },
+  cardBlack: { backgroundColor: BLACK },
 
   cardTitle: { color: "#fff", fontWeight: "900", fontSize: 18 },
   cardSubtitle: { color: "rgba(255,255,255,0.95)", fontWeight: "700", marginTop: 4 },

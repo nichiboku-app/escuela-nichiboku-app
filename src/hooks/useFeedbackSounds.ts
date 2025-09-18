@@ -1,5 +1,6 @@
+// src/hooks/useFeedbackSounds.ts
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type UseFeedbackSoundsReturn = {
   playCorrect: () => Promise<void>;
@@ -9,7 +10,7 @@ type UseFeedbackSoundsReturn = {
 
 export function useFeedbackSounds(): UseFeedbackSoundsReturn {
   const correctRef = useRef<Audio.Sound | null>(null);
-  const wrongRef   = useRef<Audio.Sound | null>(null);
+  const wrongRef = useRef<Audio.Sound | null>(null);
   const [ready, setReady] = useState<boolean>(false);
 
   useEffect(() => {
@@ -27,47 +28,71 @@ export function useFeedbackSounds(): UseFeedbackSoundsReturn {
         });
 
         const correct = new Audio.Sound();
-        const wrong   = new Audio.Sound();
+        const wrong = new Audio.Sound();
 
-        await correct.loadAsync(require("../../assets/sounds/correct.mp3"), { shouldPlay: false });
-        await wrong.loadAsync(require("../../assets/sounds/wrong.mp3"),     { shouldPlay: false });
+        // Rutas desde src/hooks → ../../assets/...
+        await correct.loadAsync(require("../../assets/sounds/correct.mp3"), {
+          shouldPlay: false,
+        });
+        await wrong.loadAsync(require("../../assets/sounds/wrong.mp3"), {
+          shouldPlay: false,
+        });
 
         if (isMounted) {
           correctRef.current = correct;
-          wrongRef.current   = wrong;
+          wrongRef.current = wrong;
           setReady(true);
         } else {
           await correct.unloadAsync();
           await wrong.unloadAsync();
         }
-      } catch {
-        setReady(true); // aunque falle, no bloqueamos UI
+      } catch (e) {
+        console.warn("useFeedbackSounds preload error:", e);
       }
     })();
 
     return () => {
       isMounted = false;
-      correctRef.current?.unloadAsync();
-      wrongRef.current?.unloadAsync();
-      correctRef.current = null;
-      wrongRef.current = null;
+      (async () => {
+        try {
+          await correctRef.current?.unloadAsync();
+          await wrongRef.current?.unloadAsync();
+        } catch {}
+        correctRef.current = null;
+        wrongRef.current = null;
+      })();
     };
   }, []);
 
-  const playWithReset = async (ref: React.MutableRefObject<Audio.Sound | null>) => {
-    const s = ref.current;
-    if (!s) return;
+  const playCorrect = useCallback(async () => {
     try {
-      await s.stopAsync().catch(() => {});
+      const s = correctRef.current;
+      if (!s) return;
+      const st = await s.getStatusAsync();
+      if ("isLoaded" in st && st.isLoaded && "isPlaying" in st && st.isPlaying) {
+        await s.stopAsync();
+      }
       await s.setPositionAsync(0);
       await s.playAsync();
-    } catch {
-      try { await s.replayAsync(); } catch {}
+    } catch (e) {
+      console.warn("playCorrect error:", e);
     }
-  };
+  }, []);
 
-  const playCorrect = async () => { await playWithReset(correctRef); };
-  const playWrong   = async () => { await playWithReset(wrongRef); };
+  const playWrong = useCallback(async () => {
+    try {
+      const s = wrongRef.current;
+      if (!s) return;
+      const st = await s.getStatusAsync();
+      if ("isLoaded" in st && st.isLoaded && "isPlaying" in st && st.isPlaying) {
+        await s.stopAsync();
+      }
+      await s.setPositionAsync(0);
+      await s.playAsync();
+    } catch (e) {
+      console.warn("playWrong error:", e);
+    }
+  }, []);
 
   return { playCorrect, playWrong, ready };
 }
